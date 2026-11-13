@@ -26,9 +26,10 @@ jacoco {
 spotless {
     encoding 'UTF-8'
     lineEndings = 'UNIX'
-    // Basic whitespace only; indentation and imports keep their existing style.
+    // Basic whitespace cleanup; convert leading tabs to four spaces, keeping import order.
     java {
         target 'src/**/*.java', 'test/**/*.java'
+        leadingTabsToSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
     }
