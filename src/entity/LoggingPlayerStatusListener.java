@@ -9,10 +9,10 @@ import engine.Core;
  * Player Status &amp; Buff/Debuff 1.
  */
 public final class LoggingPlayerStatusListener
-		implements PlayerStatusListener {
+        implements PlayerStatusListener {
 
-	@Override
-	public void onPlayerStatusEvent(final PlayerStatusEvent event) {
-		Core.getLogger().info(event.toString());
-	}
+    @Override
+    public void onPlayerStatusEvent(final PlayerStatusEvent event) {
+        Core.getLogger().info(event.toString());
+    }
 }

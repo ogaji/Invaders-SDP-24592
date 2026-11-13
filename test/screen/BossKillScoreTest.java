@@ -16,68 +16,68 @@ import entity.Boss;
  */
 public final class BossKillScoreTest {
 
-	private BossKillScoreTest() {
-	}
+    private BossKillScoreTest() {
+    }
 
-	private static void check(final boolean condition, final String message) {
-		if (!condition)
-			throw new AssertionError(message);
-	}
+    private static void check(final boolean condition, final String message) {
+        if (!condition)
+            throw new AssertionError(message);
+    }
 
-	public static void main(final String[] args) throws Exception {
-		checkEachBossTypeHasAScore();
-		checkDefeatGivesTheScoreOnce(GameScreen.firstBossLevel(),
-				Boss.BossType.BOSS_A);
-		for (int level : GameScreen.BOSS_LEVELS)
-			if (level != GameScreen.firstBossLevel())
-				checkDefeatGivesTheScoreOnce(level, Boss.BossType.BOSS_B);
+    public static void main(final String[] args) throws Exception {
+        checkEachBossTypeHasAScore();
+        checkDefeatGivesTheScoreOnce(GameScreen.firstBossLevel(),
+                Boss.BossType.BOSS_A);
+        for (int level : GameScreen.BOSS_LEVELS)
+            if (level != GameScreen.firstBossLevel())
+                checkDefeatGivesTheScoreOnce(level, Boss.BossType.BOSS_B);
 
-		System.out.println("Boss kill score checks passed.");
-	}
+        System.out.println("Boss kill score checks passed.");
+    }
 
-	private static void checkEachBossTypeHasAScore() {
-		for (Boss.BossType type : Boss.BossType.values())
-			check(type.getPointValue() > 0,
-					type + " gives a score when defeated");
-		check(Boss.BossType.BOSS_B.getPointValue()
-				> Boss.BossType.BOSS_A.getPointValue(),
-				"The harder boss is worth more");
-	}
+    private static void checkEachBossTypeHasAScore() {
+        for (Boss.BossType type : Boss.BossType.values())
+            check(type.getPointValue() > 0,
+                    type + " gives a score when defeated");
+        check(Boss.BossType.BOSS_B.getPointValue()
+                > Boss.BossType.BOSS_A.getPointValue(),
+                "The harder boss is worth more");
+    }
 
-	private static void checkDefeatGivesTheScoreOnce(final int level,
-			final Boss.BossType expected) throws Exception {
-		GameScreen game = new GameScreen(new GameState(level, 0, 3, 0, 0),
-				new GameSettings(5, 4, 60, 2000), false, 448, 520, 60);
-		game.initialize();
+    private static void checkDefeatGivesTheScoreOnce(final int level,
+            final Boss.BossType expected) throws Exception {
+        GameScreen game = new GameScreen(new GameState(level, 0, 3, 0, 0),
+                new GameSettings(5, 4, 60, 2000), false, 448, 520, 60);
+        game.initialize();
 
-		Method damageBoss = GameScreen.class.getDeclaredMethod("damageBoss",
-				int.class);
-		damageBoss.setAccessible(true);
+        Method damageBoss = GameScreen.class.getDeclaredMethod("damageBoss",
+                int.class);
+        damageBoss.setAccessible(true);
 
-		int before = game.getGameState().getScore();
-		int destroyedBefore = game.getGameState().getShipsDestroyed();
-		// One hit short of the boss's health: no score yet.
-		damageBoss.invoke(game, expected.getMaxHealth() - 1);
-		check(game.getGameState().getScore() == before,
-				"Stage " + level + ": no score while the boss is alive");
-		check(game.getGameState().getShipsDestroyed() == destroyedBefore,
-				"Stage " + level + ": a living boss is not counted");
+        int before = game.getGameState().getScore();
+        int destroyedBefore = game.getGameState().getShipsDestroyed();
+        // One hit short of the boss's health: no score yet.
+        damageBoss.invoke(game, expected.getMaxHealth() - 1);
+        check(game.getGameState().getScore() == before,
+                "Stage " + level + ": no score while the boss is alive");
+        check(game.getGameState().getShipsDestroyed() == destroyedBefore,
+                "Stage " + level + ": a living boss is not counted");
 
-		damageBoss.invoke(game, 1);
-		check(game.getGameState().getScore()
-				== before + expected.getPointValue(),
-				"Stage " + level + ": defeating " + expected + " gives "
-						+ expected.getPointValue() + " points");
-		check(game.getGameState().getShipsDestroyed() == destroyedBefore + 1,
-				"Stage " + level + ": defeating " + expected + " counts as"
-						+ " one ship destroyed");
+        damageBoss.invoke(game, 1);
+        check(game.getGameState().getScore()
+                == before + expected.getPointValue(),
+                "Stage " + level + ": defeating " + expected + " gives "
+                        + expected.getPointValue() + " points");
+        check(game.getGameState().getShipsDestroyed() == destroyedBefore + 1,
+                "Stage " + level + ": defeating " + expected + " counts as"
+                        + " one ship destroyed");
 
-		damageBoss.invoke(game, 50);
-		check(game.getGameState().getScore()
-				== before + expected.getPointValue(),
-				"Stage " + level + ": hitting a defeated boss gives nothing");
-		check(game.getGameState().getShipsDestroyed() == destroyedBefore + 1,
-				"Stage " + level + ": hitting a defeated boss does not count"
-						+ " again");
-	}
+        damageBoss.invoke(game, 50);
+        check(game.getGameState().getScore()
+                == before + expected.getPointValue(),
+                "Stage " + level + ": hitting a defeated boss gives nothing");
+        check(game.getGameState().getShipsDestroyed() == destroyedBefore + 1,
+                "Stage " + level + ": hitting a defeated boss does not count"
+                        + " again");
+    }
 }
