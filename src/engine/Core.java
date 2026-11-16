@@ -167,62 +167,57 @@ public final class Core {
                 break;
             case 2:
                 returnCode = playCampaign(selectedShip, width, height);
-                    break;
-                case 3:
-                    // High scores.
-                    currentScreen = new HighScoreScreen(width, height, FPS);
-                    LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                            + " high score screen at " + FPS + " fps.");
-                    returnCode = frame.setScreen(currentScreen);
-                    LOGGER.info("Closing high score screen.");
-                    break;
-                case 9:
-                    currentScreen = new PlayerRecordsScreen(width, height, FPS, recordsService);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 10:
-                    // Shop.
-                    currentScreen = new ShopScreen(width, height, FPS, shopController);
-                    returnCode = frame.setScreen(currentScreen);
-                    resolveRewards(false);
-                    break;
-                case 11: {
-                    currentScreen = new HangarMenuScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                }
-
-                case 12: {
-                    selectedShip = chooseShip(selectedShip, width, height);
-                    returnCode = 11;
-                    break;
-                }
-
-                case 13: {
-                    currentScreen = new HangarScreen(width, height, FPS);
-                    frame.setScreen(currentScreen);
-                    returnCode = 11;
-                    break;
-                }
-                case 4:
-                    currentScreen = new SettingsScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 5:
-                    currentScreen = new AudioControlScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 6:
-                    currentScreen = new ControlsSettingsScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 7:
-                    currentScreen = new GameplaySettingsScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 8:
-                    returnCode = playInfinite(width, height);
-                    break;
+                break;
+            case 8:
+                returnCode = playInfinite(width, height);
+                break;
+            case 3:
+                // High scores.
+                currentScreen = new HighScoreScreen(width, height, FPS);
+                LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                        + " high score screen at " + FPS + " fps.");
+                returnCode = frame.setScreen(currentScreen);
+                LOGGER.info("Closing high score screen.");
+                break;
+            case 9:
+                currentScreen = new PlayerRecordsScreen(width, height, FPS, recordsService);
+                returnCode = frame.setScreen(currentScreen);
+                break;
+            case 10:
+                // Shop.
+                currentScreen = new ShopScreen(width, height, FPS, shopController);
+                returnCode = frame.setScreen(currentScreen);
+                resolveRewards(false);
+                break;
+            case 11:
+                currentScreen = new HangarMenuScreen(width, height, FPS);
+                returnCode = frame.setScreen(currentScreen);
+                break;
+            case 12:
+                selectedShip = chooseShip(selectedShip, width, height);
+                returnCode = 11;
+                break;
+            case 13:
+                currentScreen = new HangarScreen(width, height, FPS);
+                frame.setScreen(currentScreen);
+                returnCode = 11;
+                break;
+            case 4:
+                currentScreen = new SettingsScreen(width, height, FPS);
+                returnCode = frame.setScreen(currentScreen);
+                break;
+            case 5:
+                currentScreen = new AudioControlScreen(width, height, FPS);
+                returnCode = frame.setScreen(currentScreen);
+                break;
+            case 6:
+                currentScreen = new ControlsSettingsScreen(width, height, FPS);
+                returnCode = frame.setScreen(currentScreen);
+                break;
+            case 7:
+                currentScreen = new GameplaySettingsScreen(width, height, FPS);
+                returnCode = frame.setScreen(currentScreen);
+                break;
             }
 
             if (returnCode == 0 && !resolveRewards(true)) {
