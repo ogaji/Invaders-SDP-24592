@@ -170,73 +170,7 @@ public final class Core {
                 LOGGER.info("Closing game mode selection screen.");
                 break;
             case 2:
-                // The selected ship decides how many lives the run starts with.
-                LOGGER.info("Selected ship: " + selectedShip.getName());
-
-                    CampaignUpgrades campaignUpgrades = CampaignUpgrades.from(playerAssets.snapshot());
-                    gameState = new GameState(1, 0, campaignUpgrades.getMaxLives(selectedShip),
-                            0, 0);
-
-                    // Game & score.
-                    RunSession runSession = new RunSession(UUID.randomUUID().toString());
-                    campaignRewards.startRun(runSession.getRunId());
-                    recordsService.startRun(runSession.getRunId());
-                    do {
-                        // One extra live every few levels.
-                        boolean bonusLife = gameState.getLevel()
-                                % EXTRA_LIFE_FRECUENCY == 0
-                                && gameState.getLivesRemaining() < campaignUpgrades.getMaxLives(selectedShip);
-
-                        currentScreen = new GameScreen(gameState,
-                                applyDifficulty(CampaignStageData
-                                        .getStageSettings(gameState.getLevel())),
-                                bonusLife, width, height, FPS, selectedShip,
-                                runSession, campaignUpgrades);
-                        LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                                + " game screen at " + FPS + " fps.");
-                        runCampaignStage((GameScreen) currentScreen, campaignRewards,
-                                screen -> frame.setScreen(screen));
-                        LOGGER.info("Closing game screen.");
-                        resolveRewards(false);
-
-                        boolean stageCleared = ((GameScreen) currentScreen).isStageCleared();
-                        gameState = ((GameScreen) currentScreen).getGameState();
-
-                        if (!stageCleared) {
-                            LOGGER.info("Stage " + gameState.getLevel()
-                                    + " failed. Not advancing.");
-                            break;
-                        }
-
-                        CampaignManager.updateMaxCampaignStage(
-                                Math.min(gameState.getLevel() + 1,
-                                        CampaignStageData.getTotalStages()));
-                        LOGGER.info("Highest Stage is: " + CampaignManager.getMaxCampaignStage());
-
-                        gameState = new GameState(gameState.getLevel() + 1,
-                                gameState.getScore(),
-                                gameState.getLivesRemaining(),
-                                gameState.getBulletsShot(),
-                                gameState.getShipsDestroyed());
-
-                    } while (gameState.getLivesRemaining() > 0
-                            && gameState.getLevel() <= CampaignStageData.getTotalStages());
-
-                    RunRecord completedRun = runSession.finish(gameState.getScore(),
-                            gameState.getShipsDestroyed(), System.currentTimeMillis());
-                    if (recordsService.completeRun(completedRun))
-                        LOGGER.info("Completed run recorded:\n" + RunRecordFormatter.format(completedRun));
-
-                    LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                            + " score screen at " + FPS + " fps, with a score of "
-                            + gameState.getScore() + ", "
-                            + gameState.getLivesRemaining() + " lives remaining, "
-                            + gameState.getBulletsShot() + " bullets shot and "
-                            + gameState.getShipsDestroyed() + " ships destroyed.");
-                    currentScreen = new ScoreScreen(width, height, FPS, gameState,
-                            recordsService.getCurrentRunUnlocks());
-                    returnCode = frame.setScreen(currentScreen);
-                    LOGGER.info("Closing score screen.");
+                returnCode = playCampaign(selectedShip, width, height);
                     break;
                 case 3:
                     // High scores.
@@ -263,14 +197,7 @@ public final class Core {
                 }
 
                 case 12: {
-                    ShipSelectionScreen shipSelection = new ShipSelectionScreen(width, height, FPS);
-                    currentScreen = shipSelection;
-                    int selectionResult = frame.setScreen(currentScreen);
-
-                    if (selectionResult == ShipSelectionScreen.SHIP_SELECTED) {
-                        selectedShip = shipSelection.getSelectedShip();
-                    }
-
+                    selectedShip = chooseShip(selectedShip, width, height);
                     returnCode = 11;
                     break;
                 }
@@ -298,35 +225,7 @@ public final class Core {
                     returnCode = frame.setScreen(currentScreen);
                     break;
                 case 8:
-                    // Infinite mode & score.
-                    RunSession infiniteSession = new RunSession(UUID.randomUUID().toString());
-                    recordsService.startRun(infiniteSession.getRunId());
-                    currentScreen = new InfiniteGameScreen(gameState, width, height,
-                            FPS, infiniteSession);
-                    LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                            + " infinite game screen at " + FPS + " fps.");
-                    runEndless((InfiniteGameScreen) currentScreen, endlessRewards,
-                            screen -> frame.setScreen(screen));
-                    LOGGER.info("Closing infinite game screen.");
-                    resolveRewards(false);
-
-                    gameState = ((InfiniteGameScreen) currentScreen).getGameState();
-                    if (!((InfiniteGameScreen) currentScreen).isAbandoned()) {
-                        RunRecord infiniteRecord = infiniteSession.finish(gameState.getScore(),
-                                gameState.getShipsDestroyed(), System.currentTimeMillis());
-                        recordsService.completeRun(infiniteRecord);
-                    }
-
-                    LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                            + " score screen at " + FPS + " fps, with a score of "
-                            + gameState.getScore() + ", "
-                            + gameState.getBulletsShot() + " bullets shot and "
-                            + gameState.getShipsDestroyed() + " ships destroyed.");
-                    // Infinite mode score screen, Space plays infinite mode again.
-                    currentScreen = new ScoreScreen(width, height, FPS, gameState,
-                            true, recordsService.getCurrentRunUnlocks());
-                    returnCode = frame.setScreen(currentScreen);
-                    LOGGER.info("Closing score screen.");
+                    returnCode = playInfinite(gameState, width, height);
                     break;
             }
 
@@ -341,6 +240,125 @@ public final class Core {
         fileHandler.flush();
         fileHandler.close();
         System.exit(0);
+    }
+
+    /** Runs the campaign and returns the next screen code from its score screen. */
+    private static int playCampaign(final ShipType selectedShip, final int width, final int height) {
+        // The selected ship decides how many lives the run starts with.
+        LOGGER.info("Selected ship: " + selectedShip.getName());
+
+        CampaignUpgrades campaignUpgrades = CampaignUpgrades.from(playerAssets.snapshot());
+        GameState gameState = new GameState(1, 0, campaignUpgrades.getMaxLives(selectedShip),
+                0, 0);
+
+        // Game & score.
+        RunSession runSession = new RunSession(UUID.randomUUID().toString());
+        campaignRewards.startRun(runSession.getRunId());
+        recordsService.startRun(runSession.getRunId());
+        do {
+            // One extra live every few levels.
+            boolean bonusLife = gameState.getLevel()
+                    % EXTRA_LIFE_FRECUENCY == 0
+                    && gameState.getLivesRemaining() < campaignUpgrades.getMaxLives(selectedShip);
+
+            currentScreen = new GameScreen(gameState,
+                    applyDifficulty(CampaignStageData
+                            .getStageSettings(gameState.getLevel())),
+                    bonusLife, width, height, FPS, selectedShip,
+                    runSession, campaignUpgrades);
+            LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                    + " game screen at " + FPS + " fps.");
+            runCampaignStage((GameScreen) currentScreen, campaignRewards,
+                    screen -> frame.setScreen(screen));
+            LOGGER.info("Closing game screen.");
+            resolveRewards(false);
+
+            boolean stageCleared = ((GameScreen) currentScreen).isStageCleared();
+            gameState = ((GameScreen) currentScreen).getGameState();
+
+            if (!stageCleared) {
+                LOGGER.info("Stage " + gameState.getLevel()
+                        + " failed. Not advancing.");
+                break;
+            }
+
+            CampaignManager.updateMaxCampaignStage(
+                    Math.min(gameState.getLevel() + 1,
+                            CampaignStageData.getTotalStages()));
+            LOGGER.info("Highest Stage is: " + CampaignManager.getMaxCampaignStage());
+
+            gameState = new GameState(gameState.getLevel() + 1,
+                    gameState.getScore(),
+                    gameState.getLivesRemaining(),
+                    gameState.getBulletsShot(),
+                    gameState.getShipsDestroyed());
+
+        } while (gameState.getLivesRemaining() > 0
+                && gameState.getLevel() <= CampaignStageData.getTotalStages());
+
+        RunRecord completedRun = runSession.finish(gameState.getScore(),
+                gameState.getShipsDestroyed(), System.currentTimeMillis());
+        if (recordsService.completeRun(completedRun))
+            LOGGER.info("Completed run recorded:\n" + RunRecordFormatter.format(completedRun));
+
+        LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                + " score screen at " + FPS + " fps, with a score of "
+                + gameState.getScore() + ", "
+                + gameState.getLivesRemaining() + " lives remaining, "
+                + gameState.getBulletsShot() + " bullets shot and "
+                + gameState.getShipsDestroyed() + " ships destroyed.");
+        currentScreen = new ScoreScreen(width, height, FPS, gameState,
+                recordsService.getCurrentRunUnlocks());
+        int returnCode = frame.setScreen(currentScreen);
+        LOGGER.info("Closing score screen.");
+        return returnCode;
+    }
+
+    /** Returns the chosen ship, or the current ship when selection is cancelled. */
+    private static ShipType chooseShip(final ShipType current, final int width, final int height) {
+        ShipSelectionScreen shipSelection = new ShipSelectionScreen(width, height, FPS);
+        currentScreen = shipSelection;
+        int selectionResult = frame.setScreen(currentScreen);
+
+        if (selectionResult == ShipSelectionScreen.SHIP_SELECTED) {
+            return shipSelection.getSelectedShip();
+        }
+
+        return current;
+    }
+
+    /** Runs infinite mode and returns the next screen code from its score screen. */
+    private static int playInfinite(GameState gameState, final int width, final int height) {
+        // Infinite mode & score.
+        RunSession infiniteSession = new RunSession(UUID.randomUUID().toString());
+        recordsService.startRun(infiniteSession.getRunId());
+        currentScreen = new InfiniteGameScreen(gameState, width, height,
+                FPS, infiniteSession);
+        LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                + " infinite game screen at " + FPS + " fps.");
+        runEndless((InfiniteGameScreen) currentScreen, endlessRewards,
+                screen -> frame.setScreen(screen));
+        LOGGER.info("Closing infinite game screen.");
+        resolveRewards(false);
+
+        gameState = ((InfiniteGameScreen) currentScreen).getGameState();
+        if (!((InfiniteGameScreen) currentScreen).isAbandoned()) {
+            RunRecord infiniteRecord = infiniteSession.finish(gameState.getScore(),
+                    gameState.getShipsDestroyed(), System.currentTimeMillis());
+            recordsService.completeRun(infiniteRecord);
+        }
+
+        LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                + " score screen at " + FPS + " fps, with a score of "
+                + gameState.getScore() + ", "
+                + gameState.getBulletsShot() + " bullets shot and "
+                + gameState.getShipsDestroyed() + " ships destroyed.");
+        // Infinite mode score screen, Space plays infinite mode again.
+        currentScreen = new ScoreScreen(width, height, FPS, gameState,
+                true, recordsService.getCurrentRunUnlocks());
+        int returnCode = frame.setScreen(currentScreen);
+        LOGGER.info("Closing score screen.");
+        return returnCode;
     }
 
     /** Registers rewards only for the official Campaign and releases the stage listener on exit. */
