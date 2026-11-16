@@ -28,12 +28,12 @@ package entity;
  */
 public interface PlayerStatusListener {
 
-	/**
-	 * Called when the player's status changes.
-	 *
-	 * @param event
-	 *            The event, with its kind, the lives left, the maximum lives
-	 *            and the shield time remaining.
-	 */
-	void onPlayerStatusEvent(PlayerStatusEvent event);
+    /**
+     * Called when the player's status changes.
+     *
+     * @param event
+     *            The event, with its kind, the lives left, the maximum lives
+     *            and the shield time remaining.
+     */
+    void onPlayerStatusEvent(PlayerStatusEvent event);
 }

@@ -36,13 +36,13 @@ public final class RecordsService {
 
     public RecordsService(final Path file) {
         this.store = new ProfileStore(file);
-		this.writer = Executors.newSingleThreadExecutor(new ThreadFactory() {
-			public Thread newThread(final Runnable runnable) {
-				Thread thread = new Thread(runnable, "records-profile-writer");
-				thread.setDaemon(true);
-				return thread;
-			}
-		});
+        this.writer = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            public Thread newThread(final Runnable runnable) {
+                Thread thread = new Thread(runnable, "records-profile-writer");
+                thread.setDaemon(true);
+                return thread;
+            }
+        });
         try {
             ProfileSnapshot snapshot = this.store.load();
             for (RunRecord record : snapshot.getRecords())
