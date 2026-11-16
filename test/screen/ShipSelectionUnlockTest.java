@@ -152,6 +152,21 @@ class ShipSelectionUnlockTest {
         assertFalse(shop.isShipAvailable(ShipType.SPEEDSTER));
     }
 
+    @Test
+    void reopeningClearsConfirmationBeforeASelectionIsCancelled() throws Exception {
+        tap(KeyEvent.VK_ENTER);
+        assertTrue(screen.wasSelectionConfirmed());
+
+        screen.initialize();
+        screen.isRunning = true;
+        assertFalse(screen.wasSelectionConfirmed());
+        tap(KeyEvent.VK_ESCAPE);
+
+        assertFalse(screen.wasSelectionConfirmed());
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertFalse(screen.isRunning);
+    }
+
     private void tap(int code) throws Exception {
         finishSelectionCooldown();
         key(code, true);
