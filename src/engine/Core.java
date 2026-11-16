@@ -143,14 +143,10 @@ public final class Core {
         if (recordsService.getLoadWarning() != null)
             LOGGER.warning(recordsService.getLoadWarning());
 
-        GameState gameState;
         ShipType selectedShip = ShipType.STANDARD;
 
         int returnCode = 1;
         do {
-            gameState = new GameState(1, 0, MAX_LIVES, 0, 0);
-            // When starting a new game, reset the difficulty adjustment conditions (player has 1 life or less && player has not cleared 3 levels while on low difficulty)
-            DifficultyAdjustWhilePlaying.getInstance().reset();
             switch (returnCode) {
             case 1:
                 // Main menu.
@@ -225,7 +221,7 @@ public final class Core {
                     returnCode = frame.setScreen(currentScreen);
                     break;
                 case 8:
-                    returnCode = playInfinite(gameState, width, height);
+                    returnCode = playInfinite(width, height);
                     break;
             }
 
@@ -244,6 +240,8 @@ public final class Core {
 
     /** Runs the campaign and returns the next screen code from its score screen. */
     private static int playCampaign(final ShipType selectedShip, final int width, final int height) {
+        // When starting a new game, reset the difficulty adjustment conditions (player has 1 life or less && player has not cleared 3 levels while on low difficulty)
+        DifficultyAdjustWhilePlaying.getInstance().reset();
         // The selected ship decides how many lives the run starts with.
         LOGGER.info("Selected ship: " + selectedShip.getName());
 
@@ -328,7 +326,9 @@ public final class Core {
     }
 
     /** Runs infinite mode and returns the next screen code from its score screen. */
-    private static int playInfinite(GameState gameState, final int width, final int height) {
+    private static int playInfinite(final int width, final int height) {
+        GameState gameState = new GameState(1, 0, MAX_LIVES, 0, 0);
+        DifficultyAdjustWhilePlaying.getInstance().reset();
         // Infinite mode & score.
         RunSession infiniteSession = new RunSession(UUID.randomUUID().toString());
         recordsService.startRun(infiniteSession.getRunId());
