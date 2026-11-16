@@ -21,11 +21,6 @@ public class GameModeScreen extends Screen { // Implementation of the game mode 
         this.selectionCooldown.reset();
     }
 
-    public final Destination run() {
-        super.run();
-        return this.nextDestination;
-    }
-
     protected final void update() {
         super.update();
 

@@ -39,12 +39,6 @@ public class ControlsSettingsScreen extends Screen {
     }
 
     @Override
-    public Destination run() {
-        super.run();
-        return this.nextDestination;
-    }
-
-    @Override
     protected void update() {
         super.update();
         draw();

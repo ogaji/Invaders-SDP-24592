@@ -78,12 +78,6 @@ public class ShopScreen extends Screen {
     }
 
     @Override
-    public Destination run() {
-        super.run();
-        return Destination.TITLE;
-    }
-
-    @Override
     protected void update() {
         super.update();
         processInput(inputDelay.checkFinished());

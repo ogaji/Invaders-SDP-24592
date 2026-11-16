@@ -18,12 +18,6 @@ public final class PlayerRecordsScreen extends Screen {
         this.nextDestination = Destination.TITLE;
     }
 
-    @Override
-    public Destination run() {
-        super.run();
-        return this.nextDestination;
-    }
-
     protected void update() {
         super.update();
         this.drawManager.initDrawing(this);

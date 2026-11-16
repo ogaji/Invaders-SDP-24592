@@ -41,18 +41,6 @@ public class HighScoreScreen extends Screen {
 
         AudioManager.playBGM("audio/bgm/music_menu.wav");
 
-
-    }
-
-    /**
-     * Starts the action.
-     *
-     * @return Next screen or game mode to open.
-     */
-    public final Destination run() {
-        super.run();
-
-        return this.nextDestination;
     }
 
     /**

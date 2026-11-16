@@ -72,17 +72,6 @@ public class AudioControlScreen extends Screen {
     }
 
     /**
-     * Starts the action.
-     *
-     * @return Next screen or game mode to open.
-     */
-    public final Destination run() {
-        super.run();
-
-        return this.nextDestination;
-    }
-
-    /**
      * Updates the elements on screen and checks for events.
      */
     protected final void update() {

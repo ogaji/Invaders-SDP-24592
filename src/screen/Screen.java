@@ -111,7 +111,7 @@ public class Screen {
                 try {
                     TimeUnit.MILLISECONDS.sleep(time);
                 } catch (InterruptedException e) {
-                    return Destination.EXIT;
+                    break;
                 }
             }
         }

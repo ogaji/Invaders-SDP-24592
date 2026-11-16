@@ -48,12 +48,6 @@ public class ShipSelectionScreen extends Screen {
     }
 
     @Override
-    public final Destination run() {
-        super.run();
-        return this.nextDestination;
-    }
-
-    @Override
     protected void update() {
         super.update();
 

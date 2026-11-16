@@ -143,18 +143,6 @@ public class ScoreScreen extends Screen {
             }
         }
 
-
-    }
-
-    /**
-     * Starts the action.
-     *
-     * @return Next screen or game mode to open.
-     */
-    public final Destination run() {
-        super.run();
-
-        return this.nextDestination;
     }
 
     /**
