@@ -24,16 +24,16 @@ public class SettingsScreen extends Screen {
 
     public SettingsScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
-        this.returnCode = 1; // Retour au menu principal
+        this.nextDestination = Destination.TITLE; // Retour au menu principal
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
         this.selectedOption = AUDIO_OPTION;
     }
 
     @Override
-    public int run() {
+    public Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     @Override
@@ -84,7 +84,7 @@ public class SettingsScreen extends Screen {
             confirmSelectedOption();
         } else if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
             AudioManager.playSFX("audio/sfx/menu_back.wav");
-            this.returnCode = 1;
+            this.nextDestination = Destination.TITLE;
             this.isRunning = false;
         }
     }
@@ -95,17 +95,17 @@ public class SettingsScreen extends Screen {
     private void confirmSelectedOption() {
         switch (this.selectedOption) {
         case AUDIO_OPTION:
-            this.returnCode = 5;
+            this.nextDestination = Destination.AUDIO_SETTINGS;
             break;
         case CONTROLS_OPTION:
-            this.returnCode = 6;
+            this.nextDestination = Destination.CONTROLS_SETTINGS;
             break;
         case GAMEPLAY_OPTION:
-            this.returnCode = 7;
+            this.nextDestination = Destination.GAMEPLAY_SETTINGS;
             break;
         case BACK_OPTION:
         default:
-            this.returnCode = 1;
+            this.nextDestination = Destination.TITLE;
             break;
         }
         if(this.selectedOption == BACK_OPTION){

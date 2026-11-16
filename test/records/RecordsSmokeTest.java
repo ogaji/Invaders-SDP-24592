@@ -487,7 +487,7 @@ private static void testRecordsPageNavigationAndRender() {
                 input.keyPressed(new java.awt.event.KeyEvent(source,
                         java.awt.event.KeyEvent.KEY_PRESSED, 0, 0, key, '\u0000'));
                 try {
-                    assertEquals(1, page.run(), "records page returns to menu for key " + key);
+                    assertSame(screen.Destination.TITLE, page.run(), "records page returns to menu for key " + key);
                 } finally {
                     input.keyReleased(new java.awt.event.KeyEvent(source,
                             java.awt.event.KeyEvent.KEY_RELEASED, 0, 0, key, '\u0000'));
@@ -522,11 +522,11 @@ private static void testRecordsPageNavigationAndRender() {
 
 private static void testLatestMainMenuOrder() throws Exception {
     screen.TitleScreen menu = new screen.TitleScreen(432,490,60);
-    java.lang.reflect.Field code = screen.Screen.class.getDeclaredField("returnCode"); code.setAccessible(true);
+    java.lang.reflect.Field selection = screen.TitleScreen.class.getDeclaredField("selectedMenuOption"); selection.setAccessible(true);
     java.lang.reflect.Method next = screen.TitleScreen.class.getDeclaredMethod("nextMenuItem"); next.setAccessible(true);
     java.lang.reflect.Method previous = screen.TitleScreen.class.getDeclaredMethod("previousMenuItem"); previous.setAccessible(true);
-    for (int expected : new int[]{10,11,3,9,4,0,2}) { next.invoke(menu); assertEquals(expected,code.getInt(menu),"forward menu includes Shop, Hangar, Settings, and Records"); }
-    for (int expected : new int[]{0,4,9,3,11,10,2}) { previous.invoke(menu); assertEquals(expected,code.getInt(menu),"reverse menu includes Shop, Hangar, Settings, and Records"); }
+    for (int expected : new int[]{1,2,3,4,5,6,0}) { next.invoke(menu); assertEquals(expected,selection.getInt(menu),"forward menu includes Shop, Hangar, Settings, and Records"); }
+    for (int expected : new int[]{6,5,4,3,2,1,0}) { previous.invoke(menu); assertEquals(expected,selection.getInt(menu),"reverse menu includes Shop, Hangar, Settings, and Records"); }
 }
     private static void assertTrue(final boolean actual,
             final String message) {

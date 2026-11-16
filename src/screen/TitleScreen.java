@@ -14,7 +14,13 @@ import engine.Core;
  */
 public class TitleScreen extends Screen {
 
-    // Variable to track which menu option is selected (0 = first choice)
+    private static final Destination[] MENU_DESTINATIONS = {
+        Destination.GAME_MODE, Destination.SHOP, Destination.HANGAR_MENU,
+        Destination.HIGH_SCORES, Destination.PLAYER_RECORDS, Destination.SETTINGS,
+        Destination.EXIT
+    };
+
+    /** Index of the highlighted menu entry. */
     private int selectedMenuOption = 0;
 
     /** Milliseconds between changes in user selection. */
@@ -38,7 +44,7 @@ public class TitleScreen extends Screen {
         super(width, height, fps);
 
         // Defaults to play.
-        this.returnCode = 2;
+        this.nextDestination = Destination.GAME_MODE;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
 
@@ -48,12 +54,12 @@ public class TitleScreen extends Screen {
     /**
      * Starts the action.
      *
-     * @return Next screen code.
+     * @return Next screen or game mode to open.
      */
-    public final int run() {
+    public final Destination run() {
         super.run();
 
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     /**
@@ -68,8 +74,8 @@ public class TitleScreen extends Screen {
         int hoveredOption = drawManager.getMenuOptionAt(this, mouseX, mouseY);
 
         // Update selection when hovering over a different option.
-        if (hoveredOption != -1 && hoveredOption != this.returnCode) {
-            this.returnCode = hoveredOption;
+        if (hoveredOption != -1 && hoveredOption != this.selectedMenuOption) {
+            this.selectedMenuOption = hoveredOption;
             AudioManager.playSFX("audio/sfx/menu_move.wav");
         }
 
@@ -82,7 +88,8 @@ public class TitleScreen extends Screen {
                 && hoveredOption != -1
                 && this.inputDelay.checkFinished()) {
 
-            this.returnCode = hoveredOption;
+            this.selectedMenuOption = hoveredOption;
+            this.nextDestination = MENU_DESTINATIONS[this.selectedMenuOption];
             AudioManager.playSFX("audio/sfx/menu_select.wav");
             this.isRunning = false;
         }
@@ -103,27 +110,18 @@ public class TitleScreen extends Screen {
                 AudioManager.playSFX("audio/sfx/menu_move.wav");
             }
             if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
+                this.nextDestination = MENU_DESTINATIONS[this.selectedMenuOption];
                 AudioManager.playSFX("audio/sfx/menu_select.wav");
                 this.isRunning = false;
             }
             // Shortcut to the infinite mode, until it gets a menu entry.
             if (inputManager.isKeyDown(KeyEvent.VK_I)) {
                 AudioManager.playSFX("audio/sfx/menu_select.wav");
-                this.returnCode = 8;
+                this.nextDestination = Destination.INFINITE;
                 this.isRunning = false;
             }
         }
     }
-
-    /**
-     * Shifts the focus to the next menu item.
-     */
-
-
-    /**
-     * Shifts the focus to the previous menu item.
-     */
-
 
     /**
      * Draws the elements associated with the screen.
@@ -132,42 +130,17 @@ public class TitleScreen extends Screen {
         drawManager.initDrawing(this);
 
         drawManager.drawTitle(this);
-        drawManager.drawMenu(this, this.returnCode);
+        drawManager.drawMenu(this, this.selectedMenuOption);
 
         drawManager.completeDrawing(this);
     }
 
     private void nextMenuItem() {
-        if (this.returnCode == 2)
-            this.returnCode = 10;
-        else if (this.returnCode == 10)
-            this.returnCode = 11;
-        else if (this.returnCode == 11)
-            this.returnCode = 3;
-        else if (this.returnCode == 3)
-            this.returnCode = 9;
-        else if (this.returnCode == 9)
-            this.returnCode = 4;
-        else if (this.returnCode == 4)
-            this.returnCode = 0;
-        else
-            this.returnCode = 2;
+        this.selectedMenuOption = (this.selectedMenuOption + 1) % MENU_DESTINATIONS.length;
     }
 
     private void previousMenuItem() {
-        if (this.returnCode == 2)
-            this.returnCode = 0;
-        else if (this.returnCode == 0)
-            this.returnCode = 4;
-        else if (this.returnCode == 4)
-            this.returnCode = 9;
-        else if (this.returnCode == 9)
-            this.returnCode = 3;
-        else if (this.returnCode == 3)
-            this.returnCode = 11;
-        else if (this.returnCode == 11)
-            this.returnCode = 10;
-        else
-            this.returnCode = 2;
+        this.selectedMenuOption =
+                (this.selectedMenuOption - 1 + MENU_DESTINATIONS.length) % MENU_DESTINATIONS.length;
     }
 }

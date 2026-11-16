@@ -29,7 +29,7 @@ public class ControlsSettingsScreen extends Screen {
     public ControlsSettingsScreen(final int width, final int height,
             final int fps) {
         super(width, height, fps);
-        this.returnCode = 4;
+        this.nextDestination = Destination.SETTINGS;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
         this.selectedOption = LEFT_OPTION;
@@ -39,9 +39,9 @@ public class ControlsSettingsScreen extends Screen {
     }
 
     @Override
-    public int run() {
+    public Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     @Override
@@ -92,7 +92,7 @@ public class ControlsSettingsScreen extends Screen {
             confirmSelectedOption();
         } else if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
             AudioManager.playSFX("audio/sfx/menu_back.wav");
-            this.returnCode = 4;
+            this.nextDestination = Destination.SETTINGS;
             this.isRunning = false;
         }
     }
@@ -144,7 +144,7 @@ public class ControlsSettingsScreen extends Screen {
     private void confirmSelectedOption() {
         if (this.selectedOption == BACK_OPTION) {
             AudioManager.playSFX("audio/sfx/menu_back.wav");
-            this.returnCode = 4;
+            this.nextDestination = Destination.SETTINGS;
             this.isRunning = false;
         } else {
             inputManager.clearLastPressedKey();

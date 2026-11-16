@@ -149,12 +149,12 @@ public class ScoreScreen extends Screen {
     /**
      * Starts the action.
      *
-     * @return Next screen code.
+     * @return Next screen or game mode to open.
      */
-    public final int run() {
+    public final Destination run() {
         super.run();
 
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     /**
@@ -168,7 +168,7 @@ public class ScoreScreen extends Screen {
             if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
                 // Return to main menu.
                 AudioManager.playSFX("audio/sfx/menu_back.wav");
-                this.returnCode = 1;
+                this.nextDestination = Destination.TITLE;
                 this.isRunning = false;
                 if (this.isNewRecord)
                     saveScore();
@@ -176,7 +176,7 @@ public class ScoreScreen extends Screen {
                 // Play again.
                 AudioManager.playSFX("audio/sfx/menu_select.wav");
                 // The infinite mode (8) restarts itself instead of the campaign.
-                this.returnCode = this.infiniteMode ? 8 : 2;
+                this.nextDestination = this.infiniteMode ? Destination.INFINITE : Destination.CAMPAIGN;
                 this.isRunning = false;
                 if (this.isNewRecord)
                     saveScore();

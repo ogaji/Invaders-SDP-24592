@@ -56,7 +56,7 @@ public final class GameplayIntegrationTest {
         keys()[java.awt.event.KeyEvent.VK_I]=true;
         try { call(title,"update"); }
         finally { Arrays.fill(keys(),false); }
-        check((Integer)get(title,"returnCode")==8,"I shortcut retains upstream infinite route 8");
+        check(get(title,"nextDestination")==Destination.INFINITE,"I shortcut retains the infinite route");
         for (boolean infinite : new boolean[]{false,true}) {
             ScoreScreen score = new ScoreScreen(448,520,60,new GameState(1,100,0,1,1),
                     infinite,Arrays.asList(Achievement.FIRST_ENEMY));
@@ -64,7 +64,7 @@ public final class GameplayIntegrationTest {
             keys()[java.awt.event.KeyEvent.VK_SPACE]=true;
             try { call(score,"update"); }
             finally { Arrays.fill(keys(),false); }
-            check((Integer)get(score,"returnCode")== (infinite ? 8 : 2),"results replay preserves mode");
+            check(get(score,"nextDestination")== (infinite ? Destination.INFINITE : Destination.CAMPAIGN),"results replay preserves mode");
             check(!(Boolean)get(score,"gameCleared"),"failed or infinite run is not campaign cleared");
             javax.imageio.ImageIO.write((java.awt.image.BufferedImage)get(Core.getDrawManager(),"backBuffer"),
                     "png",Paths.get("out",infinite ? "infinite-results.png" : "campaign-results.png").toFile());

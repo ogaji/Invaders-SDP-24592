@@ -1730,7 +1730,6 @@ public final class DrawManager {
             "Play", "Shop", "Hangar", "High scores",
             "Records & Achievements", "Settings", "Exit"
         };
-        int[] codes = { 2, 10, 11, 3, 9, 4, 0 };
         Icon[] icons = {
                 Icon.PLAY, Icon.SHOP, Icon.HANGAR, Icon.HIGH_SCORES,
                 Icon.RECORDS, Icon.SETTINGS, Icon.EXIT
@@ -1738,7 +1737,7 @@ public final class DrawManager {
         int spacing = fontRegularMetrics.getHeight() * 3 / 2;
         int firstY = screen.getHeight() / 2 + fontRegularMetrics.getHeight() * 2;
         for (int i = 0; i < labels.length; i++) {
-            boolean selected = option == codes[i];
+            boolean selected = option == i;
             int labelY = firstY + i * spacing;
             backBufferGraphics.setColor(selected ? Color.GREEN : Color.WHITE);
             drawCenteredRegularString(screen, labels[i], labelY);
@@ -1747,6 +1746,7 @@ public final class DrawManager {
         }
     }
 
+    /** Returns the hovered main menu index, or -1 when no entry is hovered. */
     public int getMenuOptionAt(final Screen screen,
             final int mouseX, final int mouseY) {
         if (fontRegularMetrics == null)
@@ -1756,7 +1756,6 @@ public final class DrawManager {
                 "Play", "Shop", "Hangar", "High scores",
                 "Records & Achievements", "Settings", "Exit"
         };
-        int[] codes = { 2, 10, 11, 3, 9, 4, 0 };
         int fontHeight = fontRegularMetrics.getHeight();
         int spacing = fontHeight * 3 / 2;
         int firstY = screen.getHeight() / 2 + fontHeight * 2;
@@ -1770,7 +1769,7 @@ public final class DrawManager {
 
             if (mouseX >= left && mouseX <= left + textWidth
                     && mouseY >= top && mouseY <= bottom)
-                return codes[i];
+                return i;
         }
 
         return -1;

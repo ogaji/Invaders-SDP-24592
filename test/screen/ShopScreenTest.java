@@ -176,7 +176,7 @@ class ShopScreenTest {
         tap(KeyEvent.VK_DOWN);
         tap(KeyEvent.VK_SPACE);
         assertFalse(screen.isRunning);
-        assertEquals(ShopScreen.RETURN_TO_MAIN_MENU, screen.returnCode);
+        assertEquals(Destination.TITLE, screen.nextDestination);
         assertEquals(1000, assets.getBalance());
         assertFalse(Files.exists(saveFile.getPath()));
     }
@@ -190,7 +190,7 @@ class ShopScreenTest {
         screen.initialize();
         screen.inputDelay = Core.getCooldown(0);
         key(KeyEvent.VK_ESCAPE, true);
-        assertEquals(1, screen.run());
+        assertEquals(Destination.TITLE, screen.run());
         assertEquals(900, assets.getBalance());
         releaseAll();
         screen.initialize();
@@ -198,7 +198,7 @@ class ShopScreenTest {
         tap(KeyEvent.VK_UP); // Wrap from first product to Back.
         tap(KeyEvent.VK_SPACE);
         assertFalse(screen.isRunning);
-        assertEquals(1, screen.returnCode);
+        assertEquals(Destination.TITLE, screen.nextDestination);
     }
 
     @Test

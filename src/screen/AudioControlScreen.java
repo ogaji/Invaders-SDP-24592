@@ -63,7 +63,7 @@ public class AudioControlScreen extends Screen {
         super(width, height, fps);
 
         // Returns to the main menu when closed.
-        this.returnCode = 4;
+        this.nextDestination = Destination.SETTINGS;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
 
@@ -74,12 +74,12 @@ public class AudioControlScreen extends Screen {
     /**
      * Starts the action.
      *
-     * @return Next screen code.
+     * @return Next screen or game mode to open.
      */
-    public final int run() {
+    public final Destination run() {
         super.run();
 
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     /**

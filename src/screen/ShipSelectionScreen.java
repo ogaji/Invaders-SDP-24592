@@ -12,15 +12,14 @@ import audio.AudioManager;
  */
 public class ShipSelectionScreen extends Screen {
 
-    public static final int RETURN_TO_HANGAR_MENU = 1;
-    public static final int SHIP_SELECTED = 20;
-
     private static final int SELECTION_TIME = 200;
 
     private final Cooldown selectionCooldown;
     private final ShipType[] shipTypes = ShipType.values();
     /** Currently selected index. */
     private int selectedIndex = 0;
+    /** Whether the highlighted ship was confirmed rather than cancelled. */
+    private boolean selectionConfirmed;
     /** Tracks the previous left mouse button state. */
     private boolean wasMousePressed = false;
     /** Option hovered in the previous frame, used only to time the hover sound. */
@@ -36,16 +35,22 @@ public class ShipSelectionScreen extends Screen {
     public ShipSelectionScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
 
-        this.returnCode = RETURN_TO_HANGAR_MENU;
+        this.nextDestination = Destination.HANGAR_MENU;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
         this.selectedIndex = 0;
     }
 
     @Override
-    public final int run() {
+    public void initialize() {
+        this.selectionConfirmed = false;
+        this.nextDestination = Destination.HANGAR_MENU;
+    }
+
+    @Override
+    public final Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     @Override
@@ -109,7 +114,8 @@ public class ShipSelectionScreen extends Screen {
                 || this.inputManager.isKeyDown(KeyEvent.VK_ENTER)) {
             confirmSelection();
         } else if (this.inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
-            this.returnCode = RETURN_TO_HANGAR_MENU;
+            this.selectionConfirmed = false;
+            this.nextDestination = Destination.HANGAR_MENU;
             this.isRunning = false;
             AudioManager.playSFX("audio/sfx/menu_back.wav");
         }
@@ -117,7 +123,8 @@ public class ShipSelectionScreen extends Screen {
 
     private void confirmSelection() {
         if (!Core.getShopController().isShipAvailable(getSelectedShip())) return;
-        this.returnCode = SHIP_SELECTED;
+        this.selectionConfirmed = true;
+        this.nextDestination = Destination.HANGAR_MENU;
         this.isRunning = false;
         AudioManager.playSFX("audio/sfx/menu_select.wav");
     }
@@ -127,6 +134,11 @@ public class ShipSelectionScreen extends Screen {
         this.drawManager.drawShipSelection(
                 this, this.shipTypes, this.selectedIndex);
         this.drawManager.completeDrawing(this);
+    }
+
+    /** Returns whether the player confirmed an available ship during this visit. */
+    public final boolean wasSelectionConfirmed() {
+        return this.selectionConfirmed;
     }
 
     public final ShipType getSelectedShip() {

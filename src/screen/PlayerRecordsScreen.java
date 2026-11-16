@@ -15,13 +15,13 @@ public final class PlayerRecordsScreen extends Screen {
             final int fps, final RecordsService service) {
         super(width, height, fps);
         this.service = service;
-        this.returnCode = 1;
+        this.nextDestination = Destination.TITLE;
     }
 
     @Override
-    public int run() {
+    public Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     protected void update() {
@@ -35,7 +35,7 @@ public final class PlayerRecordsScreen extends Screen {
         if (this.inputManager.isKeyDown(KeyEvent.VK_ESCAPE)
                 || this.inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
             AudioManager.playSFX("audio/sfx/menu_back.wav");
-            this.returnCode = 1;
+            this.nextDestination = Destination.TITLE;
             this.isRunning = false;
         } else if (this.inputManager.isKeyDown(KeyEvent.VK_LEFT)
                 || this.inputManager.isKeyDown(KeyEvent.VK_RIGHT)) {

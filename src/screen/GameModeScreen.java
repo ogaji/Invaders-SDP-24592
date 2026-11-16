@@ -16,14 +16,14 @@ public class GameModeScreen extends Screen { // Implementation of the game mode 
     public GameModeScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
         this.selected = 0; // Se positionne par défaut sur le premier mode
-        this.returnCode = 1; // Par défaut : retour au menu principal
+        this.nextDestination = Destination.TITLE; // Par défaut : retour au menu principal
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
     }
 
-    public final int run() {
+    public final Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     protected final void update() {
@@ -49,21 +49,21 @@ public class GameModeScreen extends Screen { // Implementation of the game mode 
 
             if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
                 if (this.selected == 2) {
-                    this.returnCode = 1;
+                    this.nextDestination = Destination.TITLE;
                 } else if (this.selected == 0) {
-                    this.returnCode = 8;
+                    this.nextDestination = Destination.INFINITE;
                 } else if (this.selected == 1) {
-                    this.returnCode = 2;
+                    this.nextDestination = Destination.CAMPAIGN;
                 }
                 this.isRunning = false;
-                if(this.returnCode==1)
+                if(this.nextDestination==Destination.TITLE)
                     AudioManager.playSFX("audio/sfx/menu_back.wav");
                 else
                     AudioManager.playSFX("audio/sfx/menu_select.wav");
             }
 
             if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
-                this.returnCode = 1;
+                this.nextDestination = Destination.TITLE;
                 this.isRunning = false;
                 AudioManager.playSFX("audio/sfx/menu_back.wav");
             }

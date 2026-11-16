@@ -21,16 +21,16 @@ public class GameplaySettingsScreen extends Screen {
     public GameplaySettingsScreen(final int width, final int height,
             final int fps) {
         super(width, height, fps);
-        this.returnCode = 4;
+        this.nextDestination = Destination.SETTINGS;
         this.selectedOption = GameplayConfig.getDifficulty();
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
     }
 
     @Override
-    public int run() {
+    public Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     @Override
@@ -81,7 +81,7 @@ public class GameplaySettingsScreen extends Screen {
             confirmDifficulty();
         } else if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
             AudioManager.playSFX("audio/sfx/menu_back.wav");
-            returnCode = 4;
+            nextDestination = Destination.SETTINGS;
             isRunning = false;
         }
     }
@@ -92,7 +92,7 @@ public class GameplaySettingsScreen extends Screen {
     private void confirmDifficulty() {
         GameplayConfig.setDifficulty(selectedOption);
         AudioManager.playSFX("audio/sfx/menu_back.wav");
-        returnCode = 4;
+        nextDestination = Destination.SETTINGS;
         isRunning = false;
     }
 

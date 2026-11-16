@@ -9,10 +9,6 @@ import engine.Cooldown;
 /** Menu for choosing a Hangar action. */
 public class HangarMenuScreen extends Screen {
 
-    public static final int RETURN_TO_MAIN_MENU = 1;
-    public static final int OPEN_SHIP_SELECTION = 12;
-    public static final int OPEN_COLOR_SELECTION = 13;
-
     private static final int SELECTION_TIME = 200;
 
     private final Cooldown selectionCooldown;
@@ -21,16 +17,16 @@ public class HangarMenuScreen extends Screen {
     public HangarMenuScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
 
-        this.returnCode = RETURN_TO_MAIN_MENU;
+        this.nextDestination = Destination.TITLE;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
         this.selectedOption = 0;
     }
 
     @Override
-    public final int run() {
+    public final Destination run() {
         super.run();
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     @Override
@@ -57,7 +53,7 @@ public class HangarMenuScreen extends Screen {
                 || this.inputManager.isKeyDown(KeyEvent.VK_ENTER)) {
             selectOption();
         } else if (this.inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
-            this.returnCode = RETURN_TO_MAIN_MENU;
+            this.nextDestination = Destination.TITLE;
             this.isRunning = false;
             AudioManager.playSFX("audio/sfx/menu_back.wav");
         }
@@ -65,15 +61,15 @@ public class HangarMenuScreen extends Screen {
 
     private void selectOption() {
         if (this.selectedOption == 0) {
-            this.returnCode = OPEN_SHIP_SELECTION;
+            this.nextDestination = Destination.SHIP_SELECTION;
         } else if (this.selectedOption == 1) {
-            this.returnCode = OPEN_COLOR_SELECTION;
+            this.nextDestination = Destination.SHIP_CUSTOMIZATION;
         } else {
-            this.returnCode = RETURN_TO_MAIN_MENU;
+            this.nextDestination = Destination.TITLE;
         }
 
         this.isRunning = false;
-        if (this.returnCode == RETURN_TO_MAIN_MENU) {
+        if (this.nextDestination == Destination.TITLE) {
             AudioManager.playSFX("audio/sfx/menu_back.wav");
         } else {
             AudioManager.playSFX("audio/sfx/menu_select.wav");

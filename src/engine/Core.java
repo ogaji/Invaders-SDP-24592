@@ -32,6 +32,7 @@ import screen.HighScoreScreen;
 import screen.InfiniteGameScreen;
 import screen.ScoreScreen;
 import screen.Screen;
+import screen.Destination;
 import screen.TitleScreen;
 import entity.ShipType;
 import screen.ShipSelectionScreen;
@@ -145,85 +146,81 @@ public final class Core {
 
         ShipType selectedShip = ShipType.STANDARD;
 
-        int returnCode = 1;
+        Destination nextDestination = Destination.TITLE;
         do {
-            switch (returnCode) {
-            case 1:
+            switch (nextDestination) {
+            case TITLE:
                 // Main menu.
                 currentScreen = new TitleScreen(width, height, FPS);
                 LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
                         + " title screen at " + FPS + " fps.");
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 LOGGER.info("Closing title screen.");
-
-                if (returnCode == 2)
-                    returnCode = 14;
                 break;
-            case 14:
+            case GAME_MODE:
                 currentScreen = new GameModeScreen(width, height, FPS);
                 LOGGER.info("Starting game mode selection screen.");
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 LOGGER.info("Closing game mode selection screen.");
                 break;
-            case 2:
-                returnCode = playCampaign(selectedShip, width, height);
+            case CAMPAIGN:
+                nextDestination = playCampaign(selectedShip, width, height);
                 break;
-            case 8:
-                returnCode = playInfinite(width, height);
+            case INFINITE:
+                nextDestination = playInfinite(width, height);
                 break;
-            case 3:
+            case HIGH_SCORES:
                 // High scores.
                 currentScreen = new HighScoreScreen(width, height, FPS);
                 LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
                         + " high score screen at " + FPS + " fps.");
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 LOGGER.info("Closing high score screen.");
                 break;
-            case 9:
+            case PLAYER_RECORDS:
                 currentScreen = new PlayerRecordsScreen(width, height, FPS, recordsService);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 break;
-            case 10:
+            case SHOP:
                 // Shop.
                 currentScreen = new ShopScreen(width, height, FPS, shopController);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 resolveRewards(false);
                 break;
-            case 11:
+            case HANGAR_MENU:
                 currentScreen = new HangarMenuScreen(width, height, FPS);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 break;
-            case 12:
+            case SHIP_SELECTION:
                 selectedShip = chooseShip(selectedShip, width, height);
-                returnCode = 11;
+                nextDestination = Destination.HANGAR_MENU;
                 break;
-            case 13:
+            case SHIP_CUSTOMIZATION:
                 currentScreen = new HangarScreen(width, height, FPS);
-                frame.setScreen(currentScreen);
-                returnCode = 11;
+                nextDestination = frame.setScreen(currentScreen);
                 break;
-            case 4:
+            case SETTINGS:
                 currentScreen = new SettingsScreen(width, height, FPS);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 break;
-            case 5:
+            case AUDIO_SETTINGS:
                 currentScreen = new AudioControlScreen(width, height, FPS);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 break;
-            case 6:
+            case CONTROLS_SETTINGS:
                 currentScreen = new ControlsSettingsScreen(width, height, FPS);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 break;
-            case 7:
+            case GAMEPLAY_SETTINGS:
                 currentScreen = new GameplaySettingsScreen(width, height, FPS);
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 break;
             }
 
-            if (returnCode == 0 && !resolveRewards(true)) {
-                returnCode = 1;
+            if (nextDestination == Destination.EXIT && !resolveRewards(true)) {
+                nextDestination = Destination.TITLE;
             }
-        } while (returnCode != 0);
+        } while (nextDestination != Destination.EXIT);
 
         recordsService.close();
         if (recordsService.getSaveError() != null)
@@ -233,8 +230,8 @@ public final class Core {
         System.exit(0);
     }
 
-    /** Runs the campaign and returns the next screen code from its score screen. */
-    private static int playCampaign(final ShipType selectedShip, final int width, final int height) {
+    /** Runs the campaign and returns the destination chosen on its score screen. */
+    private static Destination playCampaign(final ShipType selectedShip, final int width, final int height) {
         // When starting a new game, reset the difficulty adjustment conditions (player has 1 life or less && player has not cleared 3 levels while on low difficulty)
         DifficultyAdjustWhilePlaying.getInstance().reset();
         // The selected ship decides how many lives the run starts with.
@@ -302,26 +299,26 @@ public final class Core {
                 + gameState.getShipsDestroyed() + " ships destroyed.");
         currentScreen = new ScoreScreen(width, height, FPS, gameState,
                 recordsService.getCurrentRunUnlocks());
-        int returnCode = frame.setScreen(currentScreen);
+        Destination nextDestination = frame.setScreen(currentScreen);
         LOGGER.info("Closing score screen.");
-        return returnCode;
+        return nextDestination;
     }
 
     /** Returns the chosen ship, or the current ship when selection is cancelled. */
     private static ShipType chooseShip(final ShipType current, final int width, final int height) {
         ShipSelectionScreen shipSelection = new ShipSelectionScreen(width, height, FPS);
         currentScreen = shipSelection;
-        int selectionResult = frame.setScreen(currentScreen);
+        frame.setScreen(currentScreen);
 
-        if (selectionResult == ShipSelectionScreen.SHIP_SELECTED) {
+        if (shipSelection.wasSelectionConfirmed()) {
             return shipSelection.getSelectedShip();
         }
 
         return current;
     }
 
-    /** Runs infinite mode and returns the next screen code from its score screen. */
-    private static int playInfinite(final int width, final int height) {
+    /** Runs infinite mode and returns the destination chosen on its score screen. */
+    private static Destination playInfinite(final int width, final int height) {
         GameState gameState = new GameState(1, 0, MAX_LIVES, 0, 0);
         DifficultyAdjustWhilePlaying.getInstance().reset();
         // Infinite mode & score.
@@ -351,9 +348,9 @@ public final class Core {
         // Infinite mode score screen, Space plays infinite mode again.
         currentScreen = new ScoreScreen(width, height, FPS, gameState,
                 true, recordsService.getCurrentRunUnlocks());
-        int returnCode = frame.setScreen(currentScreen);
+        Destination nextDestination = frame.setScreen(currentScreen);
         LOGGER.info("Closing score screen.");
-        return returnCode;
+        return nextDestination;
     }
 
     /** Registers rewards only for the official Campaign and releases the stage listener on exit. */
