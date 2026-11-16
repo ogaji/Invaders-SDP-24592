@@ -47,7 +47,7 @@ Run a task with `.\gradlew.bat <task>` on Windows or `sh ./gradlew <task>` on ma
 - Combined JaCoCo coverage: `build/reports/jacoco/test/html/index.html` and `build/reports/jacoco/test/jacocoTestReport.xml`.
 - Standalone regression results appear in the console and contribute to the combined coverage report.
 
-Spotless currently handles trailing whitespace, final newlines, and LF line endings. It does not change Java indentation or import order. A broader Java formatting style remains open for course-wide discussion. Coverage is reported without enforcing a minimum percentage.
+Spotless currently handles trailing whitespace, final newlines, and LF line endings. It converts leading Java tabs to four spaces and preserves import order. A broader Java formatting style remains open for course-wide discussion. Coverage is reported without enforcing a minimum percentage.
 
 Test sources from `test/` and `tests/` are consolidated under `test/`, following their Java package directories. The build rejects Java files left under `tests/` so they cannot be silently skipped. JUnit 5 tests are discovered automatically. Standalone `main()` suites are listed in `smokeTestClasses` in `build.gradle`; register new standalone `*Test.java` suites there so `check` runs them. `test/shop/ShopPreview.java` is a manual tool outside the automated checks.
 
