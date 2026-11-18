@@ -133,7 +133,7 @@ class EnemyDefeatClassificationTest {
 
         for (int frame = 0; frame < 5; frame++) {
             call(game, "manageCollisions");
-            call(game, "manageGrenades");
+            manageActiveGrenades(game);
         }
 
         assertEquals(1, Collections.frequency(defeats.ids(), onlyId),
@@ -223,7 +223,7 @@ class EnemyDefeatClassificationTest {
                 target.getPositionX() + target.getWidth() / 2,
                 target.getPositionY() + target.getHeight() / 2));
 
-        call(game, "manageGrenades");
+        manageActiveGrenades(game);
 
         assertEquals(Collections.singletonList(DefeatedEnemyType.B),
                 defeats.types(),
@@ -496,6 +496,13 @@ class EnemyDefeatClassificationTest {
         Method method = target.getClass().getDeclaredMethod(name);
         method.setAccessible(true);
         method.invoke(target);
+    }
+
+    private static void manageActiveGrenades(final GameScreen game)
+            throws Exception {
+        Method method = GameScreen.class.getDeclaredMethod("manageGrenades", boolean.class);
+        method.setAccessible(true);
+        method.invoke(game, true);
     }
 
     private static Object get(final Object target, final String name)

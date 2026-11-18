@@ -578,32 +578,31 @@ public class GameScreen extends Screen {
         return this.returnCode;
     }
 
-    /**
-     * Updates the elements on screen, checks for events, and plays the bonus
-     * enemy appearance sound.
-     */
+    /** Advances one frame and draws the resulting stage state. */
     protected final void update() {
         super.update();
         updateAchievementNotice();
         updatePlayerStatus();
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished) {
+        boolean countdownFinished = this.inputDelay.checkFinished();
+        if (countdownFinished && !this.levelFinished) {
             updateRunTiming();
             handlePlayerInput();
             updateWorld();
+            updateItems();
+            resolveCollisions();
+        } else {
+            manageGrenades(false);
         }
 
-        this.ship.update();
-
-        if (this.inputDelay.checkFinished() && !this.levelFinished)
-            updateItems();
-
-        resolveCollisions();
         cleanBullets();
         this.particleSystem.update();
-        draw();
-
         advanceStageIfReady();
+        if (this.levelFinished)
+            this.fallingObstacles.clear();
+
+        this.ship.update();
+        draw(countdownFinished);
 
         if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
             this.isRunning = false;
@@ -675,10 +674,9 @@ public class GameScreen extends Screen {
     }
 
     private void resolveCollisions() {
-        if (!updateFallingObstacles())
-            manageFallingObstacleCollisions();
+        updateFallingObstacles();
         manageCollisions();
-        manageGrenades();
+        manageGrenades(true);
         manageBallContact();
 
         if (this.annihilator.isFiring())
@@ -850,7 +848,7 @@ public class GameScreen extends Screen {
     /**
      * Draws the elements associated with the screen.
      */
-    private void draw() {
+    private void draw(final boolean countdownFinished) {
         drawManager.initDrawing(this);
 
         if (this.annihilator.isCharging() || this.annihilator.isFiring())
@@ -938,7 +936,7 @@ public class GameScreen extends Screen {
         drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
 
         // Countdown to game start.
-        if (!this.inputDelay.checkFinished()) {
+        if (!countdownFinished) {
             int countdown = (int) ((INPUT_DELAY
                     - (System.currentTimeMillis()
                     - this.gameStartTime)) / 1000);
@@ -988,24 +986,8 @@ public class GameScreen extends Screen {
         this.bossBullets.removeAll(outside);
     }
 
-    /** Creates, advances, and retires the non-damaging falling hazards. */
-    private boolean updateFallingObstacles() {
-        if (this.levelFinished) {
-            this.fallingObstacles.clear();
-            return false;
-        }
-        if (!this.inputDelay.checkFinished())
-            return false;
-
-        if (this.fallingObstacles.isEmpty()
-                && this.fallingObstacleCooldown.checkFinished()) {
-            int rightmostX = this.width - FallingObstacle.WIDTH - 1;
-            int positionX = 1 + this.obstacleRandom.nextInt(rightmostX);
-            this.fallingObstacles.add(new FallingObstacle(positionX,
-                    SEPARATION_LINE_HEIGHT));
-            return true;
-        }
-
+    /** Advances existing hazards and spawns new ones after collisions. */
+    private void updateFallingObstacles() {
         for (Iterator<FallingObstacle> iterator =
                 this.fallingObstacles.iterator(); iterator.hasNext();) {
             FallingObstacle obstacle = iterator.next();
@@ -1015,14 +997,20 @@ public class GameScreen extends Screen {
                 this.fallingObstacleCooldown.reset();
             }
         }
-        return false;
+        manageFallingObstacleCollisions();
+
+        // A new obstacle gets one frame at its spawn position before it can hit.
+        if (this.fallingObstacles.isEmpty()
+                && this.fallingObstacleCooldown.checkFinished()) {
+            int rightmostX = this.width - FallingObstacle.WIDTH - 1;
+            int positionX = 1 + this.obstacleRandom.nextInt(rightmostX);
+            this.fallingObstacles.add(new FallingObstacle(positionX,
+                    SEPARATION_LINE_HEIGHT));
+        }
     }
 
     /** Consumes a colliding hazard, applying only the existing slow effect. */
     private void manageFallingObstacleCollisions() {
-        if (!this.inputDelay.checkFinished() || this.levelFinished)
-            return;
-
         for (Iterator<FallingObstacle> iterator =
              this.fallingObstacles.iterator(); iterator.hasNext();) {
             FallingObstacle obstacle = iterator.next();
@@ -1052,12 +1040,10 @@ public class GameScreen extends Screen {
      * Manages collisions between bullets and ships.
      */
     private void manageCollisions() {
-        if (this.levelFinished)
-            return;
         Set<Bullet> recyclable = new HashSet<Bullet>();
         for (Bullet bullet : this.bullets) {
             if (bullet.isEnemyBullet()) {
-                if (checkCollision(bullet, this.ship) && !this.levelFinished) {
+                if (checkCollision(bullet, this.ship)) {
                     recyclable.add(bullet);
                     damagePlayer(1, "Hit on player ship");
                 }
@@ -1146,7 +1132,7 @@ public class GameScreen extends Screen {
 
         Set<BossBullet> hitBossBullets = new HashSet<BossBullet>();
         for (BossBullet bossBullet : this.bossBullets) {
-            if (checkCollision(bossBullet, this.ship) && !this.levelFinished) {
+            if (checkCollision(bossBullet, this.ship)) {
                 hitBossBullets.add(bossBullet);
                 damagePlayer(bossBullet.getDamage(),
                         "Hit on player ship by the boss");
@@ -1160,7 +1146,6 @@ public class GameScreen extends Screen {
      * corridor and neutralizes enemy projectiles inside it.
      */
     private void manageAnnihilatorBeam() {
-        if (this.levelFinished) return;
         boolean enemyDestroyed = false;
         for (EnemyShip enemyShip : this.enemyShipFormation) {
             if (!enemyShip.isDestroyed()
@@ -1614,7 +1599,6 @@ public class GameScreen extends Screen {
     private void tryDropChameleonHull(final EnemyShip enemy) {
         if (!this.chameleonDroppedThisLevel
                 && this.level >= ChameleonHull.REQUIRED_LEVEL
-                && !this.levelFinished
                 && this.playerStatus.isAlive()
                 && this.itemDropRandom.nextDouble() < ChameleonHull.DROP_CHANCE) {
 
@@ -1665,10 +1649,7 @@ public class GameScreen extends Screen {
 
     /** Contact kills use the existing score, destruction and drop systems. */
     private void manageBallContact() {
-        if (!this.inputDelay.checkFinished()
-                || this.levelFinished
-                || this.ship.isDestroyed()
-                || !this.ship.isChameleonHullActive()) {
+        if (this.ship.isDestroyed() || !this.ship.isChameleonHullActive()) {
             return;
         }
         boolean enemyDestroyed = false;
@@ -1739,8 +1720,7 @@ public class GameScreen extends Screen {
      *            Destroyed enemy ship.
      */
     private void tryDropGrenade(final EnemyShip enemyShip) {
-        if (!this.levelFinished
-                && this.grenadeDropsThisLevel < MAX_GRENADE_DROPS_PER_LEVEL
+        if (this.grenadeDropsThisLevel < MAX_GRENADE_DROPS_PER_LEVEL
                 && Math.random() < GRENADE_DROP_CHANCE) {
             this.grenadeDropsThisLevel++;
             this.itemManager.spawnItem(new ClusterGrenadeItem(
@@ -1758,7 +1738,6 @@ public class GameScreen extends Screen {
      */
     private void tryDropAnnihilator(final EnemyShip enemyShip) {
         if (!this.annihilatorDroppedThisLevel
-                && !this.levelFinished
                 && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
                 && Math.random() < ANNIHILATOR_DROP_CHANCE) {
             this.itemManager.spawnItem(new AnnihilatorItem(
@@ -1778,7 +1757,7 @@ public class GameScreen extends Screen {
      *            Destroyed bonus ship.
      */
     private void tryDropHyperfire(final EnemyShip bonusShip) {
-        if (!this.hyperfireDroppedThisLevel && !this.levelFinished
+        if (!this.hyperfireDroppedThisLevel
                 && bonusShip != null) {
             this.itemManager.spawnItem(new Hyperfire(
                     bonusShip.getPositionX(), bonusShip.getPositionY()));
@@ -1789,12 +1768,10 @@ public class GameScreen extends Screen {
 
     /**
      * Moves the grenades and their fragments. Once the stage has ended,
-     * they keep moving but no longer hit anything, so the score, kill count
-     * and defeat events cannot change after the end.
+     * they keep moving without dealing damage. Pass {@code canHit} only
+     * while the stage is in progress.
      */
-    private void manageGrenades() {
-        boolean canHit = !this.levelFinished;
-
+    private void manageGrenades(final boolean canHit) {
         Set<Grenade> exploded = new HashSet<Grenade>();
         for (Grenade grenade : this.grenades) {
             grenade.update();

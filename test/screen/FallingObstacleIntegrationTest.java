@@ -330,7 +330,8 @@ public final class FallingObstacleIntegrationTest {
         ship.setPositionX(expectedX);
         ship.setPositionY(40);
 
-        check(updateObstacleFrame(game),
+        updateObstacles(game);
+        check(obstacles(game).size() == 1,
                 "The expired timer creates an obstacle on this frame");
         FallingObstacle obstacle = obstacles(game).iterator().next();
         check(obstacle.getPositionY() == 40,
@@ -339,8 +340,7 @@ public final class FallingObstacleIntegrationTest {
                 && !game.getPlayerStatus().isSlowActive(),
                 "Spawn-frame overlap neither consumes the obstacle nor applies slow");
 
-        check(!updateObstacleFrame(game),
-                "The following frame advances the existing obstacle");
+        updateObstacles(game);
         check(obstacles(game).isEmpty()
                 && game.getPlayerStatus().isSlowActive(),
                 "Normal collision handling resumes on the next frame");
@@ -357,14 +357,14 @@ public final class FallingObstacleIntegrationTest {
         int x = ship.getPositionX();
         int y = ship.getPositionY();
 
-        invoke(game, "draw");
+        drawCountdown(game);
         BufferedImage withoutObstacle = copyBackBuffer(game);
         ship.setShieldActive(false);
-        invoke(game, "draw");
+        drawCountdown(game);
         BufferedImage withoutShield = copyBackBuffer(game);
         ship.setShieldActive(true);
         obstacles(game).add(new FallingObstacle(x, y));
-        invoke(game, "draw");
+        drawCountdown(game);
         BufferedImage withShipOverlap = copyBackBuffer(game);
 
         Map<?, ?> sprites = (Map<?, ?>) field(
@@ -415,7 +415,7 @@ public final class FallingObstacleIntegrationTest {
                 "The test finds obstacle pixels overlapping the shield outline");
         obstacles(game).add(new FallingObstacle(x + shieldOffsetX,
                 y + shieldOffsetY));
-        invoke(game, "draw");
+        drawCountdown(game);
         BufferedImage withShieldOverlap = copyBackBuffer(game);
         check(countPreservedShieldHaloObstaclePixels(withoutObstacle,
                 withoutShield, withShieldOverlap, obstacleSprite,
@@ -585,15 +585,6 @@ public final class FallingObstacleIntegrationTest {
         invoke(game, "updateFallingObstacles");
     }
 
-    private static boolean updateObstacleFrame(final GameScreen game)
-            throws Exception {
-        boolean spawned = ((Boolean) invokeResult(game,
-                "updateFallingObstacles")).booleanValue();
-        if (!spawned)
-            collideObstacles(game);
-        return spawned;
-    }
-
     private static void collideObstacles(final GameScreen game)
             throws Exception {
         invoke(game, "manageFallingObstacleCollisions");
@@ -606,11 +597,11 @@ public final class FallingObstacleIntegrationTest {
         method.invoke(target);
     }
 
-    private static Object invokeResult(final Object target, final String name)
+    private static void drawCountdown(final GameScreen game)
             throws Exception {
-        Method method = target.getClass().getDeclaredMethod(name);
+        Method method = GameScreen.class.getDeclaredMethod("draw", boolean.class);
         method.setAccessible(true);
-        return method.invoke(target);
+        method.invoke(game, false);
     }
 
     private static Field field(Class<?> type, final String name)
