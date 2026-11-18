@@ -87,13 +87,6 @@ public class GameScreen extends Screen {
     private static final int FALLING_OBSTACLE_INTERVAL = 17500;
     /** Spawn interval varies from fifteen to twenty seconds. */
     private static final int FALLING_OBSTACLE_VARIANCE = 2500;
-    /**
-     * Enables the debug keys used to exercise player status by hand. Off
-     * unless the game is started with -Dinvaders.debugKeys=true, so a normal
-     * play session on main never has them.
-     */
-    private static final boolean DEBUG_KEYS =
-            Boolean.getBoolean("invaders.debugKeys");
     /** Height of the interface separation line. */
     private static final int SEPARATION_LINE_HEIGHT = 40;
     /** Damage dealt to the boss by one player shot (to confirm with the
@@ -200,7 +193,6 @@ public class GameScreen extends Screen {
     /** Player lives left. */
     private PlayerStatus playerStatus;
     /** State of the debug shield key on the previous frame. */
-    private boolean shieldDebugKeyWasDown;
     /** Total bullets shot by the player. */
     private int bulletsShot;
     /** Total ships destroyed by the player. */
@@ -228,7 +220,6 @@ public class GameScreen extends Screen {
     /** Separates the enemy type from the random part of a defeat ID. */
     static final String DEFEAT_ID_SEPARATOR = ":";
     /** Prevents repeated activation while holding H. */
-    private boolean hyperfireKeyPressed = false;
     /** Flag to track if the urgent low-health BGM is currently playing. */
     private boolean isLowHealthBGM = false;
 
@@ -493,7 +484,6 @@ public class GameScreen extends Screen {
         this.chameleonDroppedThisLevel = false;
         this.hyperfireDroppedThisLevel = false;
         this.annihilatorDroppedThisLevel = false;
-        this.hyperfireKeyPressed = false;
 
         this.grenades = new HashSet<Grenade>();
         this.fragments = new HashSet<GrenadeFragment>();
@@ -651,18 +641,6 @@ public class GameScreen extends Screen {
                     }
                 }
 
-                // Hyperfire test activation with the H key, only with the
-                // debug keys enabled so normal play cannot get it for free.
-                if (DEBUG_KEYS) {
-                    boolean hyperfireKeyDown =
-                            inputManager.isKeyDown(KeyEvent.VK_H);
-                    if (hyperfireKeyDown && !this.hyperfireKeyPressed) {
-                        this.itemManager.getBuffManager().addBuff(
-                                new Hyperfire(0, 0), this.ship);
-                    }
-                    this.hyperfireKeyPressed = hyperfireKeyDown;
-                }
-
                 // Cluster Grenade launch with the G key. Ignored if G is
                 // also bound to movement or firing, so one press cannot do
                 // both and waste a grenade.
@@ -695,24 +673,6 @@ public class GameScreen extends Screen {
                     this.spaceHeldSince = 0;
                 }
 
-                // Temporary: the shield has no in-game source until B5 adds
-                // the buff item, so it cannot be verified by playing without
-                // this key. Removed in that PR.
-                if (DEBUG_KEYS) {
-                    boolean shieldKeyDown = inputManager
-                            .isKeyDown(KeyEvent.VK_F2);
-                    // Fires on the press, not every frame the key is held,
-                    // so holding F2 cannot chain shields over the expiry and
-                    // hide the very timing this key exists to show.
-                    if (shieldKeyDown && !this.shieldDebugKeyWasDown) {
-                        if (this.playerStatus.activateShield())
-                            this.logger.info("Debug shield granted.");
-                        else
-                            this.logger.info("Debug shield refused (ship not "
-                                    + "shield-capable).");
-                    }
-                    this.shieldDebugKeyWasDown = shieldKeyDown;
-                }
             } else {
                 // Cancel charging when the ship is destroyed.
                 this.annihilator.cancelCharge();
