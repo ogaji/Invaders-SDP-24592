@@ -15,11 +15,13 @@ public class OrbitalAnnihilator {
     public static final int BEAM_WIDTH = 24;
     /** Level in which the item can drop. */
     public static final int REQUIRED_LEVEL = 7;
+    private static final int ACTIVATION_HOLD_TIME = 1000;
 
     private enum State { LOCKED, IDLE, CHARGING, FIRING }
 
     private State state;
     private long phaseStart;
+    private long chargeKeyHeldSince;
 
     public OrbitalAnnihilator() {
         this.state = State.LOCKED;
@@ -30,6 +32,20 @@ public class OrbitalAnnihilator {
     public final void arm() {
         if (this.state == State.LOCKED)
             this.state = State.IDLE;
+    }
+
+    /** Returns whether holding the charge key has just started charging. */
+    public final boolean handleChargeInput(final boolean keyDown, final int level) {
+        if (!keyDown || !isReady() || level != REQUIRED_LEVEL) {
+            this.chargeKeyHeldSince = 0;
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        if (this.chargeKeyHeldSince == 0)
+            this.chargeKeyHeldSince = now;
+
+        return now - this.chargeKeyHeldSince >= ACTIVATION_HOLD_TIME && trigger();
     }
 
     /** Triggers the item, if it is owned and ready. */
@@ -56,6 +72,7 @@ public class OrbitalAnnihilator {
 
     /** Cancels a charge in progress (ship hit), the item is not lost. */
     public final void cancelCharge() {
+        this.chargeKeyHeldSince = 0;
         if (this.state == State.CHARGING) {
             AudioManager.playSFX("audio/sfx/item_laser_cancel.wav");
             this.state = State.IDLE;

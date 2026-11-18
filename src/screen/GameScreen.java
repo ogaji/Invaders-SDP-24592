@@ -115,7 +115,6 @@ public class GameScreen extends Screen {
     /** Stages where a boss appears (agreed with the team, may change). */
     static final int[] BOSS_LEVELS = { 3, 5, 7 };
     /** Time the space key must be held to trigger the Annihilator. */
-    private static final int ANNIHILATOR_HOLD_TIME = 1000;
     /** Chance for a destroyed enemy ship to drop a Cluster Grenade item. */
     private static final double GRENADE_DROP_CHANCE = 0.15;
     /** Fixed altitude (Y) where a grenade explodes if it hits nothing. */
@@ -208,7 +207,6 @@ public class GameScreen extends Screen {
     /** Orbital Annihilator (Doomsday Laser), only available on level 7. */
     private OrbitalAnnihilator annihilator;
     /** Moment the space key started being held, 0 if not held. */
-    private long spaceHeldSince;
     /** Last countdown number that played a sound. */
     private int lastCountdown = -1;
     private RunSession runSession;
@@ -649,12 +647,8 @@ public class GameScreen extends Screen {
                     this.ship.getPositionY(), this.bossBullets);
         }
 
-        if (!this.ship.isDestroyed() && !this.annihilator.isCharging())
-            this.bulletsShot += this.ship.updateBurst(this.bullets);
-
         updateBallMovement();
 
-        this.annihilator.update();
         this.enemyShipFormation.update();
         this.enemyShipFormation.shoot(this.bullets, this.ship);
     }
@@ -684,16 +678,23 @@ public class GameScreen extends Screen {
     }
 
     private void handlePlayerInput() {
-        if (!this.ship.isDestroyed()) {
+        if (this.ship.isDestroyed()) {
+            this.annihilator.cancelCharge();
+        } else {
             moveShipHorizontally();
             firePlayerWeapon();
             handleGrenadeInput();
-            handleAnnihilatorInput();
-        } else {
-            // Cancel charging when the ship is destroyed.
-            this.annihilator.cancelCharge();
-            this.spaceHeldSince = 0;
+
+            if (this.annihilator.handleChargeInput(
+                    inputManager.isKeyDown(KeyEvent.VK_SPACE), this.level)) {
+                this.ship.cancelBurst();
+            }
+            // A burst emits its pending rounds separately from a new shot.
+            // Check after Space handling so a new charge suppresses that burst.
+            if (!this.annihilator.isCharging())
+                this.bulletsShot += this.ship.updateBurst(this.bullets);
         }
+        this.annihilator.update();
     }
 
     private void moveShipHorizontally() {
@@ -718,15 +719,12 @@ public class GameScreen extends Screen {
     }
 
     private void firePlayerWeapon() {
-        // Normal shooting using configured controls.
-        if (inputManager.isKeyDown(
+        if (!this.annihilator.isCharging() && inputManager.isKeyDown(
                 ControlsConfig.getKey(ControlsConfig.FIRE))) {
-            if (!this.annihilator.isCharging()) {
-                int fired = this.ship.shoot(this.bullets);
-                this.bulletsShot += fired;
-                if (fired > 0) {
-                    AudioManager.playSFX("audio/sfx/player_shoot.wav");
-                }
+            int fired = this.ship.shoot(this.bullets);
+            this.bulletsShot += fired;
+            if (fired > 0) {
+                AudioManager.playSFX("audio/sfx/player_shoot.wav");
             }
         }
     }
@@ -742,29 +740,6 @@ public class GameScreen extends Screen {
                 AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
         }
         this.grenadeKeyPressed = grenadeKeyDown;
-    }
-
-    private void handleAnnihilatorInput() {
-        // Orbital Annihilator charging mechanic.
-        if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
-            if (!this.annihilator.isReady()) {
-                this.spaceHeldSince = 0;
-            } else if (this.spaceHeldSince == 0) {
-                this.spaceHeldSince = System.currentTimeMillis();
-            }
-
-            if (this.spaceHeldSince != 0
-                    && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
-                    && System.currentTimeMillis() - this.spaceHeldSince >= ANNIHILATOR_HOLD_TIME) {
-                this.annihilator.trigger();
-                // Charging stops the ship shooting, so a burst that
-                // is still owed is dropped rather than fired when
-                // the beam is over.
-                this.ship.cancelBurst();
-            }
-        } else {
-            this.spaceHeldSince = 0;
-        }
     }
 
     /** Progression shared by official and custom stages. */
