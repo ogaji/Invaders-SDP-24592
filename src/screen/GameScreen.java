@@ -584,6 +584,32 @@ public class GameScreen extends Screen {
      */
     protected final void update() {
         super.update();
+        updateAchievementNotice();
+        updatePlayerStatus();
+
+        if (this.inputDelay.checkFinished() && !this.levelFinished) {
+            updateRunTiming();
+            handlePlayerInput();
+            updateWorld();
+        }
+
+        this.ship.update();
+
+        if (this.inputDelay.checkFinished() && !this.levelFinished)
+            updateItems();
+
+        resolveCollisions();
+        cleanBullets();
+        this.particleSystem.update();
+        draw();
+
+        advanceStageIfReady();
+
+        if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
+            this.isRunning = false;
+    }
+
+    private void updateAchievementNotice() {
         if (this.recordsService != null) {
             long now = System.currentTimeMillis();
             if (this.visibleAchievement == null || now >= this.achievementNoticeUntil) {
@@ -594,7 +620,9 @@ public class GameScreen extends Screen {
                 this.achievementNoticeUntil = this.visibleAchievement == null ? 0 : now + 3000;
             }
         }
+    }
 
+    private void updatePlayerStatus() {
         // Outside the input-delay check: a shield that runs out has to be
         // announced even while the level is finishing.
         this.playerStatus.update();
@@ -602,53 +630,51 @@ public class GameScreen extends Screen {
         DifficultyAdjustWhilePlaying.getInstance().update(this.playerStatus.getLives());
         // Reconcile shields active outside the item-collision path.
         clearSlowIfEnergyShieldActive();
+    }
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished) {
-            if (this.runSession != null) this.runSession.startActiveSegment(System.nanoTime());
-            if (this.runSession != null && this.recordsService != null)
-                this.recordsService.activeDuration(this.runSession.getRunId(),
-                        this.runSession.getActiveDurationMillis(System.nanoTime()));
+    private void updateRunTiming() {
+        if (this.runSession != null) this.runSession.startActiveSegment(System.nanoTime());
+        if (this.runSession != null && this.recordsService != null)
+            this.recordsService.activeDuration(this.runSession.getRunId(),
+                    this.runSession.getActiveDurationMillis(System.nanoTime()));
+    }
 
-            handlePlayerInput();
+    private void updateWorld() {
+        this.bonusEnemyManager.update(this.width);
 
-            this.bonusEnemyManager.update(this.width);
-
-            Boss boss = getBossOnScreen();
-            if (boss != null) {
-                boss.update(1, this.width - 1);
-                this.bossManager.update(
-                        this.ship.getPositionX() + this.ship.getWidth() / 2,
-                        this.ship.getPositionY(), this.bossBullets);
-            }
-
-            if (!this.ship.isDestroyed() && !this.annihilator.isCharging())
-                this.bulletsShot += this.ship.updateBurst(this.bullets);
-
-            updateBallMovement();
-
-            this.annihilator.update();
-            this.enemyShipFormation.update();
-            this.enemyShipFormation.shoot(this.bullets, this.ship);
+        Boss boss = getBossOnScreen();
+        if (boss != null) {
+            boss.update(1, this.width - 1);
+            this.bossManager.update(
+                    this.ship.getPositionX() + this.ship.getWidth() / 2,
+                    this.ship.getPositionY(), this.bossBullets);
         }
 
-        this.ship.update();
+        if (!this.ship.isDestroyed() && !this.annihilator.isCharging())
+            this.bulletsShot += this.ship.updateBurst(this.bullets);
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished)
-            updateTwinCanonItem();
+        updateBallMovement();
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished) {
-            this.itemManager.update(this.ship);
+        this.annihilator.update();
+        this.enemyShipFormation.update();
+        this.enemyShipFormation.shoot(this.bullets, this.ship);
+    }
 
-            if (!this.ship.isDestroyed()) {
-                this.itemManager.checkCollisions(this.ship);
-                // Clear immediately in the frame an Energy Shield is collected.
-                clearSlowIfEnergyShieldActive();
-            }
+    private void updateItems() {
+        updateTwinCanonItem();
+        this.itemManager.update(this.ship);
 
-            clampShipPosition();
-            clampBallPositionY();
+        if (!this.ship.isDestroyed()) {
+            this.itemManager.checkCollisions(this.ship);
+            // Clear immediately in the frame an Energy Shield is collected.
+            clearSlowIfEnergyShieldActive();
         }
 
+        clampShipPosition();
+        clampBallPositionY();
+    }
+
+    private void resolveCollisions() {
         if (!updateFallingObstacles())
             manageFallingObstacleCollisions();
         manageCollisions();
@@ -657,15 +683,6 @@ public class GameScreen extends Screen {
 
         if (this.annihilator.isFiring())
             manageAnnihilatorBeam();
-
-        cleanBullets();
-        this.particleSystem.update();
-        draw();
-
-        advanceStageIfReady();
-
-        if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
-            this.isRunning = false;
     }
 
     private void handlePlayerInput() {
