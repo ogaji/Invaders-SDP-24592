@@ -149,7 +149,7 @@ public class GameScreen extends Screen {
     /** Fragments of exploded grenades. */
     private Set<GrenadeFragment> fragments;
     /** Prevents launching several grenades while holding G. */
-    private boolean grenadeKeyPressed = false;
+    private boolean grenadeKeyWasDown;
     /** Number of Cluster Grenade items dropped in this level. */
     private int grenadeDropsThisLevel = 0;
     /** Ships destroyed when the level started, for the Twin Cannon spawn. */
@@ -485,7 +485,7 @@ public class GameScreen extends Screen {
 
         this.grenades = new HashSet<Grenade>();
         this.fragments = new HashSet<GrenadeFragment>();
-        this.grenadeKeyPressed = false;
+        this.grenadeKeyWasDown = false;
         this.grenadeDropsThisLevel = 0;
         this.shipsDestroyedAtStart = this.shipsDestroyed;
         this.twinCanonSpawned = false;
@@ -625,7 +625,7 @@ public class GameScreen extends Screen {
         this.playerStatus.update();
         // Sends the current number of lives remaining to the DifficultyAdjustWhilePlaying class
         DifficultyAdjustWhilePlaying.getInstance().update(this.playerStatus.getLives());
-        // Reconcile shields active outside the item-collision path.
+        // A shield already active at the start of the frame clears slow before movement.
         clearSlowIfEnergyShieldActive();
     }
 
@@ -659,10 +659,11 @@ public class GameScreen extends Screen {
 
         if (!this.ship.isDestroyed()) {
             this.itemManager.checkCollisions(this.ship);
-            // Clear immediately in the frame an Energy Shield is collected.
+            // A shield picked up this frame must clear slow before hazard collisions.
             clearSlowIfEnergyShieldActive();
         }
 
+        // A Chameleon Hull pickup or expiry can change the bounds after movement.
         clampShipPosition();
         clampBallPositionY();
     }
@@ -678,12 +679,15 @@ public class GameScreen extends Screen {
     }
 
     private void handlePlayerInput() {
+        boolean grenadePressed = readGrenadePress();
         if (this.ship.isDestroyed()) {
             this.annihilator.cancelCharge();
         } else {
             moveShipHorizontally();
             firePlayerWeapon();
-            handleGrenadeInput();
+            if (grenadePressed
+                    && this.ship.launchGrenade(this.grenades, GRENADE_DETONATION_Y))
+                AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
 
             if (this.annihilator.handleChargeInput(
                     inputManager.isKeyDown(KeyEvent.VK_SPACE), this.level)) {
@@ -708,6 +712,7 @@ public class GameScreen extends Screen {
         boolean isLeftBorder = this.ship.getPositionX()
                 - this.ship.getSpeed() < 1;
 
+        // Chameleon movement can overshoot the base-speed check in either direction.
         if (moveRight && !isRightBorder) {
             this.ship.moveRight();
             clampShipPosition();
@@ -729,17 +734,13 @@ public class GameScreen extends Screen {
         }
     }
 
-    private void handleGrenadeInput() {
-        // Cluster Grenade launch with the G key. Ignored if G is
-        // also bound to movement or firing, so one press cannot do
-        // both and waste a grenade.
-        boolean grenadeKeyDown = !isGrenadeKeyBoundElsewhere()
+    private boolean readGrenadePress() {
+        // A press during hit recovery is consumed while the ship cannot throw.
+        boolean keyDown = !isGrenadeKeyBoundElsewhere()
                 && inputManager.isKeyDown(KeyEvent.VK_G);
-        if (grenadeKeyDown && !this.grenadeKeyPressed) {
-            if (this.ship.launchGrenade(this.grenades, GRENADE_DETONATION_Y))
-                AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
-        }
-        this.grenadeKeyPressed = grenadeKeyDown;
+        boolean pressed = keyDown && !this.grenadeKeyWasDown;
+        this.grenadeKeyWasDown = keyDown;
+        return pressed;
     }
 
     /** Progression shared by official and custom stages. */
