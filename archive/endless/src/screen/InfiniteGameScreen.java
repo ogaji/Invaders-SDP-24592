@@ -124,12 +124,12 @@ public class InfiniteGameScreen extends Screen {
         AudioManager.playBGM("audio/bgm/music_game.wav");
     }
 
-    public final Destination run() {
+    public final int run() {
         try { super.run(); }
         finally { if (runSession != null) runSession.stopActiveSegment(System.nanoTime()); }
 
         this.logger.info("Infinite mode ended with a score of " + this.score);
-        return this.nextDestination;
+        return this.returnCode;
     }
 
     protected final void update() {

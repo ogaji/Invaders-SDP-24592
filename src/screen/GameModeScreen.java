@@ -5,18 +5,18 @@ import audio.AudioManager;
 import engine.Cooldown;
 import engine.Core;
 
-public class GameModeScreen extends Screen { // Implementation of the game mode selection screen.
+public class GameModeScreen extends Screen {
 
     private static final int SELECTION_TIME = 200;
-    private static final int NUM_CHOICES = 3; // Number of game mode choices (0: Infinite, 1: Campaign, 2: Back)
+    private static final int NUM_CHOICES = 2;
 
     private int selected;
     private Cooldown selectionCooldown;
 
     public GameModeScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
-        this.selected = 0; // Se positionne par défaut sur le premier mode
-        this.nextDestination = Destination.TITLE; // Par défaut : retour au menu principal
+        this.selected = 0;
+        this.nextDestination = Destination.CAMPAIGN;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
     }
@@ -26,32 +26,26 @@ public class GameModeScreen extends Screen { // Implementation of the game mode 
 
         draw();
         if (this.selectionCooldown.checkFinished()
-                && this.inputDelay.checkFinished()) {
+            && this.inputDelay.checkFinished()) {
 
             if (inputManager.isKeyDown(KeyEvent.VK_UP)
-                    || inputManager.isKeyDown(KeyEvent.VK_W)) {
+                || inputManager.isKeyDown(KeyEvent.VK_W)) {
                 this.selected = this.selected == 0 ? NUM_CHOICES - 1
-                        : this.selected - 1;
+                    : this.selected - 1;
                 this.selectionCooldown.reset();
-                AudioManager.playSFX("audio/sfx/menu_move.wav");   // 추가 (두 곳 모두)
+                AudioManager.playSFX("audio/sfx/menu_move.wav");
             }
             if (inputManager.isKeyDown(KeyEvent.VK_DOWN)
-                    || inputManager.isKeyDown(KeyEvent.VK_S)) {
+                || inputManager.isKeyDown(KeyEvent.VK_S)) {
                 this.selected = (this.selected + 1) % NUM_CHOICES;
                 this.selectionCooldown.reset();
                 AudioManager.playSFX("audio/sfx/menu_move.wav");
             }
 
             if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
-                if (this.selected == 2) {
-                    this.nextDestination = Destination.TITLE;
-                } else if (this.selected == 0) {
-                    this.nextDestination = Destination.INFINITE;
-                } else if (this.selected == 1) {
-                    this.nextDestination = Destination.CAMPAIGN;
-                }
+                this.nextDestination = this.selected == 0 ? Destination.CAMPAIGN : Destination.TITLE;
                 this.isRunning = false;
-                if(this.nextDestination==Destination.TITLE)
+                if (this.nextDestination == Destination.TITLE)
                     AudioManager.playSFX("audio/sfx/menu_back.wav");
                 else
                     AudioManager.playSFX("audio/sfx/menu_select.wav");

@@ -93,12 +93,4 @@ class EnemyShipClassificationTest {
 
         assertFalse(enemy.hit(), "a destroyed enemy cannot be destroyed again");
     }
-
-    @Test
-    void anInfiniteModeEnemyInheritsTheClassification() {
-        ZigzagEnemyShip enemy =
-                new ZigzagEnemyShip(100, 100, SpriteType.EnemyShipA1, 1);
-
-        assertSame(DefeatedEnemyType.A, enemy.getDefeatedType());
-    }
 }

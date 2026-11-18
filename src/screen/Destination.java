@@ -10,7 +10,6 @@ public enum Destination {
     AUDIO_SETTINGS,
     CONTROLS_SETTINGS,
     GAMEPLAY_SETTINGS,
-    INFINITE,
     PLAYER_RECORDS,
     SHOP,
     HANGAR_MENU,

@@ -2087,7 +2087,7 @@ public final class DrawManager {
     }
 
     public void drawGameModeMenu(final Screen screen, final int option) {
-        String[] labels = { "Endless Mode", "Campaign Mode", "Back" };
+        String[] labels = { "Campaign Mode", "Back" };
 
         backBufferGraphics.setFont(fontBig);
         backBufferGraphics.setColor(Color.GREEN);
@@ -2097,7 +2097,7 @@ public final class DrawManager {
         for (int i = 0; i < labels.length; i++) {
             backBufferGraphics.setColor(i == option ? Color.GREEN : Color.WHITE);
             drawCenteredRegularString(screen, labels[i],
-                    screen.getHeight() / 3 + 60 + i * 40);
+                screen.getHeight() / 3 + 60 + i * 40);
         }
     }
 }

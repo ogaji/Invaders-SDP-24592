@@ -94,12 +94,13 @@ class TitleScreenNavigationTest {
     }
 
     @Test
-    void infiniteShortcutWorksWithAnotherMenuEntryHighlighted() throws Exception {
+    void pressingIDoesNotNavigateOrMoveTheHighlight() throws Exception {
         tap(KeyEvent.VK_DOWN);
         tap(KeyEvent.VK_I);
 
-        assertFalse(screen.isRunning);
-        assertSame(Destination.INFINITE, screen.nextDestination);
+        assertTrue(screen.isRunning);
+        tap(KeyEvent.VK_SPACE);
+        assertSame(Destination.SHOP, screen.nextDestination);
     }
 
     @Test
