@@ -15,12 +15,14 @@ public class OrbitalAnnihilator {
     public static final int BEAM_WIDTH = 24;
     /** Level in which the item can drop. */
     public static final int REQUIRED_LEVEL = 7;
+    /** Milliseconds the activation key must be held to start charging. */
     private static final int ACTIVATION_HOLD_TIME = 1000;
 
     private enum State { LOCKED, IDLE, CHARGING, FIRING }
 
     private State state;
     private long phaseStart;
+    /** Start time of the current activation hold, or zero when no hold is being timed. */
     private long chargeKeyHeldSince;
 
     public OrbitalAnnihilator() {

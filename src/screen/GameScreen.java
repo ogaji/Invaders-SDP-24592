@@ -114,7 +114,6 @@ public class GameScreen extends Screen {
             "audio/sfx/boss_explosion.wav";
     /** Stages where a boss appears (agreed with the team, may change). */
     static final int[] BOSS_LEVELS = { 3, 5, 7 };
-    /** Time the space key must be held to trigger the Annihilator. */
     /** Chance for a destroyed enemy ship to drop a Cluster Grenade item. */
     private static final double GRENADE_DROP_CHANCE = 0.15;
     /** Fixed altitude (Y) where a grenade explodes if it hits nothing. */
@@ -191,7 +190,6 @@ public class GameScreen extends Screen {
     private final FloatingScoreHud floatingScoreHud = new FloatingScoreHud();
     /** Player lives left. */
     private PlayerStatus playerStatus;
-    /** State of the debug shield key on the previous frame. */
     /** Total bullets shot by the player. */
     private int bulletsShot;
     /** Total ships destroyed by the player. */
@@ -206,7 +204,6 @@ public class GameScreen extends Screen {
     private boolean bonusLife;
     /** Orbital Annihilator (Doomsday Laser), only available on level 7. */
     private OrbitalAnnihilator annihilator;
-    /** Moment the space key started being held, 0 if not held. */
     /** Last countdown number that played a sound. */
     private int lastCountdown = -1;
     private RunSession runSession;
@@ -217,7 +214,6 @@ public class GameScreen extends Screen {
     private final Map<EnemyShip,String> defeatIds = new IdentityHashMap<EnemyShip,String>();
     /** Separates the enemy type from the random part of a defeat ID. */
     static final String DEFEAT_ID_SEPARATOR = ":";
-    /** Prevents repeated activation while holding H. */
     /** Flag to track if the urgent low-health BGM is currently playing. */
     private boolean isLowHealthBGM = false;
 
