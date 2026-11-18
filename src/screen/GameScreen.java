@@ -609,75 +609,7 @@ public class GameScreen extends Screen {
                 this.recordsService.activeDuration(this.runSession.getRunId(),
                         this.runSession.getActiveDurationMillis(System.nanoTime()));
 
-            if (!this.ship.isDestroyed()) {
-                boolean moveRight = inputManager.isKeyDown(
-                        ControlsConfig.getKey(ControlsConfig.RIGHT));
-                boolean moveLeft = inputManager.isKeyDown(
-                        ControlsConfig.getKey(ControlsConfig.LEFT));
-
-                boolean isRightBorder = this.ship.getPositionX()
-                        + this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
-                boolean isLeftBorder = this.ship.getPositionX()
-                        - this.ship.getSpeed() < 1;
-
-                if (moveRight && !isRightBorder) {
-                    this.ship.moveRight();
-                    clampShipPosition();
-                }
-                if (moveLeft && !isLeftBorder) {
-                    this.ship.moveLeft();
-                    clampShipPosition();
-                }
-
-                // Normal shooting using configured controls.
-                if (inputManager.isKeyDown(
-                        ControlsConfig.getKey(ControlsConfig.FIRE))) {
-                    if (!this.annihilator.isCharging()) {
-                        int fired = this.ship.shoot(this.bullets);
-                        this.bulletsShot += fired;
-                        if (fired > 0) {
-                            AudioManager.playSFX("audio/sfx/player_shoot.wav");
-                        }
-                    }
-                }
-
-                // Cluster Grenade launch with the G key. Ignored if G is
-                // also bound to movement or firing, so one press cannot do
-                // both and waste a grenade.
-                boolean grenadeKeyDown = !isGrenadeKeyBoundElsewhere()
-                        && inputManager.isKeyDown(KeyEvent.VK_G);
-                if (grenadeKeyDown && !this.grenadeKeyPressed) {
-                    if (this.ship.launchGrenade(this.grenades, GRENADE_DETONATION_Y))
-                        AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
-                }
-                this.grenadeKeyPressed = grenadeKeyDown;
-
-                // Orbital Annihilator charging mechanic.
-                if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
-                    if (!this.annihilator.isReady()) {
-                        this.spaceHeldSince = 0;
-                    } else if (this.spaceHeldSince == 0) {
-                        this.spaceHeldSince = System.currentTimeMillis();
-                    }
-
-                    if (this.spaceHeldSince != 0
-                            && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
-                            && System.currentTimeMillis() - this.spaceHeldSince >= ANNIHILATOR_HOLD_TIME) {
-                        this.annihilator.trigger();
-                        // Charging stops the ship shooting, so a burst that
-                        // is still owed is dropped rather than fired when
-                        // the beam is over.
-                        this.ship.cancelBurst();
-                    }
-                } else {
-                    this.spaceHeldSince = 0;
-                }
-
-            } else {
-                // Cancel charging when the ship is destroyed.
-                this.annihilator.cancelCharge();
-                this.spaceHeldSince = 0;
-            }
+            handlePlayerInput();
 
             this.bonusEnemyManager.update(this.width);
 
@@ -734,6 +666,90 @@ public class GameScreen extends Screen {
 
         if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
             this.isRunning = false;
+    }
+
+    private void handlePlayerInput() {
+        if (!this.ship.isDestroyed()) {
+            moveShipHorizontally();
+            firePlayerWeapon();
+            handleGrenadeInput();
+            handleAnnihilatorInput();
+        } else {
+            // Cancel charging when the ship is destroyed.
+            this.annihilator.cancelCharge();
+            this.spaceHeldSince = 0;
+        }
+    }
+
+    private void moveShipHorizontally() {
+        boolean moveRight = inputManager.isKeyDown(
+                ControlsConfig.getKey(ControlsConfig.RIGHT));
+        boolean moveLeft = inputManager.isKeyDown(
+                ControlsConfig.getKey(ControlsConfig.LEFT));
+
+        boolean isRightBorder = this.ship.getPositionX()
+                + this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
+        boolean isLeftBorder = this.ship.getPositionX()
+                - this.ship.getSpeed() < 1;
+
+        if (moveRight && !isRightBorder) {
+            this.ship.moveRight();
+            clampShipPosition();
+        }
+        if (moveLeft && !isLeftBorder) {
+            this.ship.moveLeft();
+            clampShipPosition();
+        }
+    }
+
+    private void firePlayerWeapon() {
+        // Normal shooting using configured controls.
+        if (inputManager.isKeyDown(
+                ControlsConfig.getKey(ControlsConfig.FIRE))) {
+            if (!this.annihilator.isCharging()) {
+                int fired = this.ship.shoot(this.bullets);
+                this.bulletsShot += fired;
+                if (fired > 0) {
+                    AudioManager.playSFX("audio/sfx/player_shoot.wav");
+                }
+            }
+        }
+    }
+
+    private void handleGrenadeInput() {
+        // Cluster Grenade launch with the G key. Ignored if G is
+        // also bound to movement or firing, so one press cannot do
+        // both and waste a grenade.
+        boolean grenadeKeyDown = !isGrenadeKeyBoundElsewhere()
+                && inputManager.isKeyDown(KeyEvent.VK_G);
+        if (grenadeKeyDown && !this.grenadeKeyPressed) {
+            if (this.ship.launchGrenade(this.grenades, GRENADE_DETONATION_Y))
+                AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
+        }
+        this.grenadeKeyPressed = grenadeKeyDown;
+    }
+
+    private void handleAnnihilatorInput() {
+        // Orbital Annihilator charging mechanic.
+        if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
+            if (!this.annihilator.isReady()) {
+                this.spaceHeldSince = 0;
+            } else if (this.spaceHeldSince == 0) {
+                this.spaceHeldSince = System.currentTimeMillis();
+            }
+
+            if (this.spaceHeldSince != 0
+                    && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
+                    && System.currentTimeMillis() - this.spaceHeldSince >= ANNIHILATOR_HOLD_TIME) {
+                this.annihilator.trigger();
+                // Charging stops the ship shooting, so a burst that
+                // is still owed is dropped rather than fired when
+                // the beam is over.
+                this.ship.cancelBurst();
+            }
+        } else {
+            this.spaceHeldSince = 0;
+        }
     }
 
     /** Progression shared by official and custom stages. */
