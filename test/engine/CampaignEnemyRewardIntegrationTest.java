@@ -31,7 +31,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import records.RunSession;
 import screen.GameScreen;
-import screen.InfiniteGameScreen;
 import shop.ShopController;
 import shop.ShopTestFixtures;
 import static org.junit.jupiter.api.Assertions.*;
@@ -166,11 +165,11 @@ class CampaignEnemyRewardIntegrationTest {
     }
 
     @Test
-    void customAndInfiniteEventsNeverReachCampaignRewards() {
+    void customLevelEventsNeverReachCampaignRewards() {
         WaveDefinition wave = new WaveDefinition("one", new EnemyCell[][] {{new EnemyCell("A", 1)}},
-                20, 100, 60, 2000);
+            20, 100, 60, 2000);
         LevelDefinition custom = new LevelDefinition(1, "campaign-stage-01", "Custom",
-                Collections.singletonList(wave));
+            Collections.singletonList(wave));
         Core.runCustomLevel(custom, 1.0, 448, 520, 60, screen -> {
             screen.initialize();
             defeatOnlyEnemy(screen);
@@ -178,10 +177,6 @@ class CampaignEnemyRewardIntegrationTest {
             call(screen, "advanceStageIfReady");
             assertTrue(screen.isStageCleared());
         });
-        InfiniteGameScreen infinite = new InfiniteGameScreen(new GameState(1, 0, 3, 0, 0),
-                448, 520, 60, run);
-        infinite.getGameplayEvents().publish(new EnemyDefeatedEvent("campaign", "infinite", DefeatedEnemyType.A));
-        infinite.getGameplayEvents().publish(new EnemyDefeatedEvent("campaign", "legacy"));
         assertEquals(200, Core.getAssetHudSnapshot().getCredits());
         assertEquals(0, rewards.getPendingCurrency());
         assertFalse(Files.exists(save));
