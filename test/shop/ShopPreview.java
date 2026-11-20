@@ -31,10 +31,6 @@ public final class ShopPreview {
     private ShopPreview() { }
 
     public static void main(String[] args) throws Exception {
-        if (args.length > 0 && "--upgrades".equals(args[0])) {
-            runUpgradePreview();
-            return;
-        }
         boolean smoke = args.length > 0 && "--smoke".equals(args[0]);
         output = Files.createTempDirectory(smoke ? "shop-smoke-" : "shop-preview-");
         System.out.println("Preview files: " + output);
@@ -72,23 +68,6 @@ public final class ShopPreview {
             releaseKeys();
             AudioManager.setMuted(originalMuted);
             frame.dispose();
-        }
-    }
-
-    private static void runUpgradePreview() throws Exception {
-        Path directory = java.nio.file.Paths.get(System.getProperty("invaders.storageDir"));
-        Files.createDirectories(directory);
-        Files.createDirectories(java.nio.file.Paths.get(System.getProperty("user.home")));
-        seedUpgradePreview(Core.getFileManager(), directory);
-        System.out.println("Upgrade preview saves: " + directory);
-        System.out.println("Open Shop, purchase upgrades, then start Campaign. Preview credits are granted once.");
-        Core.run(ShopTestFixtures.previewProducts());
-    }
-
-    static void seedUpgradePreview(FileManager files, Path directory) throws IOException {
-        Path save = directory.resolve(FileManager.ASSETS_FILENAME);
-        if (!Files.exists(save)) {
-            files.savePlayerAssets(new PlayerAssetsState(3000, null, null), save);
         }
     }
 
