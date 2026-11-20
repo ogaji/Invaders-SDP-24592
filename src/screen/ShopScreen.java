@@ -13,7 +13,6 @@ import shop.ShopProduct;
 
 /** Displays products using the shared session controller. */
 public class ShopScreen extends Screen {
-    public static final int RETURN_TO_MAIN_MENU = 1;
 
     private final ShopController controller;
     private final List<ShopProduct> upgrades = new ArrayList<ShopProduct>();
@@ -39,7 +38,7 @@ public class ShopScreen extends Screen {
         super(validateArguments(width, height, fps, controller), height, fps);
         this.controller = controller;
         refreshProducts();
-        this.returnCode = RETURN_TO_MAIN_MENU;
+        this.nextDestination = Destination.TITLE;
     }
 
     private void refreshProducts() {
@@ -76,12 +75,6 @@ public class ShopScreen extends Screen {
 
         // Consume held state on entry, including a confirm key from the Main Menu.
         processInput(false);
-    }
-
-    @Override
-    public int run() {
-        super.run();
-        return RETURN_TO_MAIN_MENU;
     }
 
     @Override
@@ -185,7 +178,7 @@ public class ShopScreen extends Screen {
 
     private void leaveShop() {
         AudioManager.playSFX("audio/sfx/menu_back.wav");
-        returnCode = RETURN_TO_MAIN_MENU;
+        nextDestination = Destination.TITLE;
         isRunning = false;
     }
 

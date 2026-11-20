@@ -1,5 +1,7 @@
 package shop;
 
+import screen.Destination;
+
 import audio.AudioManager;
 import currency.PermanentUpgrade;
 import currency.PlayerAssets;
@@ -51,13 +53,13 @@ public final class ShopPreview {
             } else {
                 int choice;
                 do {
-                    int result = frame.setScreen(new ShopScreen(
+                    Destination result = frame.setScreen(new ShopScreen(
                             frame.getWidth(), frame.getHeight(), 60, controller));
-                    check(result == ShopScreen.RETURN_TO_MAIN_MENU, "Return contract");
-                    System.out.println("Returned Main Menu code: " + result);
+                    check(result == Destination.TITLE, "Return contract");
+                    System.out.println("Returned Main Menu destination: " + result);
                     releaseKeys();
                     choice = JOptionPane.showOptionDialog(frame,
-                            "Shop returned code " + result + ". Reopen with the same assets?",
+                            "Shop returned destination " + result + ". Reopen with the same assets?",
                             "Shop preview", JOptionPane.DEFAULT_OPTION,
                             JOptionPane.INFORMATION_MESSAGE, null,
                             new String[] { "Reopen shop", "Close preview" }, "Reopen shop");
@@ -133,7 +135,7 @@ public final class ShopPreview {
 
     private static void run(Frame frame, ShopController controller, final int[] keys, final String[] captures) {
         releaseKeys();
-        int result = frame.setScreen(new ShopScreen(frame.getWidth(), frame.getHeight(), 60, controller) {
+        Destination result = frame.setScreen(new ShopScreen(frame.getWidth(), frame.getHeight(), 60, controller) {
             private int step;
 
             @Override public void initialize() {
@@ -150,7 +152,7 @@ public final class ShopPreview {
                 step++;
             }
         });
-        check(result == ShopScreen.RETURN_TO_MAIN_MENU, "Frame.setScreen return code");
+        check(result == Destination.TITLE, "Frame.setScreen destination");
     }
 
     private static void capture(String name) {

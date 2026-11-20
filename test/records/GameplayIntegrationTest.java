@@ -60,7 +60,7 @@ public final class GameplayIntegrationTest {
         keys()[java.awt.event.KeyEvent.VK_SPACE]=true;
         try { call(score,"update"); }
         finally { Arrays.fill(keys(),false); }
-        check((Integer)get(score,"returnCode")== 2,"results replay preserves mode");
+        check(get(score,"nextDestination") == Destination.CAMPAIGN,"results replay starts campaign");
         check(!(Boolean)get(score,"gameCleared"),"failed run is not campaign cleared");
         javax.imageio.ImageIO.write((java.awt.image.BufferedImage)get(Core.getDrawManager(),"backBuffer"),
             "png",Paths.get("out","campaign-results.png").toFile());

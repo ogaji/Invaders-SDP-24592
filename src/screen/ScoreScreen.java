@@ -96,11 +96,6 @@ public class ScoreScreen extends Screen {
         }
     }
 
-    public final int run() {
-        super.run();
-        return this.returnCode;
-    }
-
     protected final void update() {
         super.update();
 
@@ -108,13 +103,13 @@ public class ScoreScreen extends Screen {
         if (this.inputDelay.checkFinished()) {
             if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
                 AudioManager.playSFX("audio/sfx/menu_back.wav");
-                this.returnCode = 1;
+                this.nextDestination = Destination.TITLE;
                 this.isRunning = false;
                 if (this.isNewRecord)
                     saveScore();
             } else if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
                 AudioManager.playSFX("audio/sfx/menu_select.wav");
-                this.returnCode = 2;
+                this.nextDestination = Destination.CAMPAIGN;
                 this.isRunning = false;
                 if (this.isNewRecord)
                     saveScore();

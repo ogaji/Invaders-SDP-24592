@@ -16,14 +16,9 @@ public class GameModeScreen extends Screen {
     public GameModeScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
         this.selected = 0;
-        this.returnCode = 2;
+        this.nextDestination = Destination.CAMPAIGN;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
-    }
-
-    public final int run() {
-        super.run();
-        return this.returnCode;
     }
 
     protected final void update() {
@@ -48,20 +43,16 @@ public class GameModeScreen extends Screen {
             }
 
             if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
-                if (this.selected == 1) {
-                    this.returnCode = 1;
-                } else if (this.selected == 0) {
-                    this.returnCode = 2;
-                }
+                this.nextDestination = this.selected == 0 ? Destination.CAMPAIGN : Destination.TITLE;
                 this.isRunning = false;
-                if(this.returnCode == 1)
+                if (this.nextDestination == Destination.TITLE)
                     AudioManager.playSFX("audio/sfx/menu_back.wav");
                 else
                     AudioManager.playSFX("audio/sfx/menu_select.wav");
             }
 
             if (inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
-                this.returnCode = 1;
+                this.nextDestination = Destination.TITLE;
                 this.isRunning = false;
                 AudioManager.playSFX("audio/sfx/menu_back.wav");
             }

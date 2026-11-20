@@ -18,16 +18,10 @@ public class HangarScreen extends Screen {
     public HangarScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
 
-        this.returnCode = 1;
+        this.nextDestination = Destination.HANGAR_MENU;
         this.selectionCooldown = Core.getCooldown(SELECTION_TIME);
         this.selectionCooldown.reset();
         this.previewShip = new Ship(width / 2 - 13, height / 2 - 8);
-    }
-
-    @Override
-    public final int run() {
-        super.run();
-        return this.returnCode;
     }
 
     @Override
@@ -47,7 +41,7 @@ public class HangarScreen extends Screen {
                 this.selectionCooldown.reset();
                 AudioManager.playSFX("audio/sfx/menu_move.wav");
             } else if (this.inputManager.isKeyDown(KeyEvent.VK_ESCAPE)) {
-                this.returnCode = 1;
+                this.nextDestination = Destination.HANGAR_MENU;
                 this.isRunning = false;
                 AudioManager.playSFX("audio/sfx/menu_back.wav");
             }

@@ -574,9 +574,9 @@ public class GameScreen extends Screen {
     /**
      * Starts the action.
      *
-     * @return Next screen code.
+     * @return Next screen or game mode to open.
      */
-    public final int run() {
+    public final Destination run() {
         try { super.run(); }
         finally { if (this.runSession != null) this.runSession.stopActiveSegment(System.nanoTime()); }
 
@@ -585,7 +585,7 @@ public class GameScreen extends Screen {
             this.score += LIFE_SCORE * (this.playerStatus.getLives() - 1);
         this.logger.info("Screen cleared with a score of " + this.score);
 
-        return this.returnCode;
+        return this.nextDestination;
     }
 
     /**

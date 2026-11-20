@@ -5,6 +5,7 @@ import java.awt.Insets;
 import javax.swing.JFrame;
 
 import screen.Screen;
+import screen.Destination;
 
 /**
  * Implements a frame to show screens on.
@@ -53,9 +54,9 @@ public class Frame extends JFrame {
      *
      * @param screen
      *               Screen to show.
-     * @return Return code of the finished screen.
+     * @return Destination chosen by the finished screen.
      */
-    public final int setScreen(final Screen screen) {
+    public final Destination setScreen(final Screen screen) {
         currentScreen = screen;
         currentScreen.initialize();
         return currentScreen.run();

@@ -50,7 +50,7 @@ public class Screen {
     /** If the screen is running. */
     protected boolean isRunning;
     /** What kind of screen goes next. */
-    protected int returnCode;
+    protected Destination nextDestination;
 
     /** Checks if the mute key was held down in the previous frame. */
     private static boolean muteKeyWasDown;
@@ -76,7 +76,7 @@ public class Screen {
         this.logger = Core.getLogger();
         this.inputDelay = Core.getCooldown(INPUT_DELAY);
         this.inputDelay.reset();
-        this.returnCode = 0;
+        this.nextDestination = Destination.EXIT;
     }
 
     /**
@@ -89,9 +89,9 @@ public class Screen {
     /**
      * Activates the screen.
      *
-     * @return Next screen code.
+     * @return Next screen or game mode to open.
      */
-    public int run() {
+    public Destination run() {
         this.isRunning = true;
         long previousTime = System.nanoTime();
 
@@ -111,12 +111,12 @@ public class Screen {
                 try {
                     TimeUnit.MILLISECONDS.sleep(time);
                 } catch (InterruptedException e) {
-                    return 0;
+                    break;
                 }
             }
         }
 
-        return 0;
+        return this.nextDestination;
     }
 
     /**

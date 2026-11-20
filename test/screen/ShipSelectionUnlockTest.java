@@ -67,13 +67,15 @@ class ShipSelectionUnlockTest {
         assertEquals(ShipType.SPEEDSTER, screen.getSelectedShip());
         tap(confirm);
         assertTrue(screen.isRunning);
-        assertEquals(ShipSelectionScreen.RETURN_TO_HANGAR_MENU, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertFalse(screen.wasSelectionConfirmed());
         assertEquals(200, shop.getBalance());
 
         assertEquals(PurchaseResult.SUCCESS, shop.purchase("ship.speedster"));
         tap(confirm);
         assertFalse(screen.isRunning);
-        assertEquals(ShipSelectionScreen.SHIP_SELECTED, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertTrue(screen.wasSelectionConfirmed());
         assertEquals(ShipType.SPEEDSTER, screen.getSelectedShip());
         assertEquals(0, shop.getBalance());
     }
@@ -85,11 +87,13 @@ class ShipSelectionUnlockTest {
         click();
         assertEquals(ShipType.SPEEDSTER, screen.getSelectedShip());
         assertTrue(screen.isRunning);
-        assertEquals(ShipSelectionScreen.RETURN_TO_HANGAR_MENU, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertFalse(screen.wasSelectionConfirmed());
         assertEquals(PurchaseResult.SUCCESS, shop.purchase("ship.speedster"));
         click();
         assertFalse(screen.isRunning);
-        assertEquals(ShipSelectionScreen.SHIP_SELECTED, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertTrue(screen.wasSelectionConfirmed());
         assertEquals(ShipType.SPEEDSTER, screen.getSelectedShip());
     }
 
@@ -99,7 +103,8 @@ class ShipSelectionUnlockTest {
         for (int index = 0; index < type.ordinal(); index++) tap(KeyEvent.VK_DOWN);
         tap(KeyEvent.VK_ENTER);
         assertFalse(screen.isRunning);
-        assertEquals(ShipSelectionScreen.SHIP_SELECTED, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertTrue(screen.wasSelectionConfirmed());
         assertEquals(type, screen.getSelectedShip());
         assertEquals(200, shop.getBalance());
         assertTrue(shop.snapshot().getUnlockedContentIds().isEmpty());
@@ -119,7 +124,8 @@ class ShipSelectionUnlockTest {
         screen.update();
 
         assertFalse(screen.isRunning);
-        assertEquals(ShipSelectionScreen.SHIP_SELECTED, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertTrue(screen.wasSelectionConfirmed());
         assertEquals(clicked, screen.getSelectedShip());
         assertTrue(shop.isShipAvailable(screen.getSelectedShip()));
         assertFalse(shop.isShipAvailable(ShipType.SPEEDSTER));
@@ -141,8 +147,24 @@ class ShipSelectionUnlockTest {
         tap(KeyEvent.VK_ENTER);
         tap(KeyEvent.VK_ESCAPE);
         assertFalse(screen.isRunning);
-        assertEquals(ShipSelectionScreen.RETURN_TO_HANGAR_MENU, screen.returnCode);
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertFalse(screen.wasSelectionConfirmed());
         assertFalse(shop.isShipAvailable(ShipType.SPEEDSTER));
+    }
+
+    @Test
+    void reopeningClearsConfirmationBeforeASelectionIsCancelled() throws Exception {
+        tap(KeyEvent.VK_ENTER);
+        assertTrue(screen.wasSelectionConfirmed());
+
+        screen.initialize();
+        screen.isRunning = true;
+        assertFalse(screen.wasSelectionConfirmed());
+        tap(KeyEvent.VK_ESCAPE);
+
+        assertFalse(screen.wasSelectionConfirmed());
+        assertEquals(Destination.HANGAR_MENU, screen.nextDestination);
+        assertFalse(screen.isRunning);
     }
 
     private void tap(int code) throws Exception {

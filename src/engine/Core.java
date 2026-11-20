@@ -31,6 +31,7 @@ import screen.GameScreen;
 import screen.HighScoreScreen;
 import screen.ScoreScreen;
 import screen.Screen;
+import screen.Destination;
 import screen.TitleScreen;
 import entity.ShipType;
 import screen.ShipSelectionScreen;
@@ -137,166 +138,80 @@ public final class Core {
         if (recordsService.getLoadWarning() != null)
             LOGGER.warning(recordsService.getLoadWarning());
 
-        GameState gameState;
         ShipType selectedShip = ShipType.STANDARD;
 
-        int returnCode = 1;
+        Destination nextDestination = Destination.TITLE;
         do {
-            gameState = new GameState(1, 0, MAX_LIVES, 0, 0);
-            // When starting a new game, reset the difficulty adjustment conditions (player has 1 life or less && player has not cleared 3 levels while on low difficulty)
-            DifficultyAdjustWhilePlaying.getInstance().reset();
-            switch (returnCode) {
-            case 1:
+            switch (nextDestination) {
+            case TITLE:
                 // Main menu.
                 currentScreen = new TitleScreen(width, height, FPS);
                 LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
                         + " title screen at " + FPS + " fps.");
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 LOGGER.info("Closing title screen.");
-
-                if (returnCode == 2)
-                    returnCode = 14;
                 break;
-            case 14:
+            case GAME_MODE:
                 currentScreen = new GameModeScreen(width, height, FPS);
                 LOGGER.info("Starting game mode selection screen.");
-                returnCode = frame.setScreen(currentScreen);
+                nextDestination = frame.setScreen(currentScreen);
                 LOGGER.info("Closing game mode selection screen.");
                 break;
-            case 2:
-                // The selected ship decides how many lives the run starts with.
-                LOGGER.info("Selected ship: " + selectedShip.getName());
-
-                    CampaignUpgrades campaignUpgrades = CampaignUpgrades.from(playerAssets.snapshot());
-                    gameState = new GameState(1, 0, campaignUpgrades.getMaxLives(selectedShip),
-                            0, 0);
-
-                    // Game & score.
-                    RunSession runSession = new RunSession(UUID.randomUUID().toString());
-                    campaignRewards.startRun(runSession.getRunId());
-                    recordsService.startRun(runSession.getRunId());
-                    do {
-                        // One extra live every few levels.
-                        boolean bonusLife = gameState.getLevel()
-                                % EXTRA_LIFE_FRECUENCY == 0
-                                && gameState.getLivesRemaining() < campaignUpgrades.getMaxLives(selectedShip);
-
-                        currentScreen = new GameScreen(gameState,
-                                applyDifficulty(CampaignStageData
-                                        .getStageSettings(gameState.getLevel())),
-                                bonusLife, width, height, FPS, selectedShip,
-                                runSession, campaignUpgrades);
-                        LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                                + " game screen at " + FPS + " fps.");
-                        runCampaignStage((GameScreen) currentScreen, campaignRewards,
-                                screen -> frame.setScreen(screen));
-                        LOGGER.info("Closing game screen.");
-                        resolveRewards(false);
-
-                        boolean stageCleared = ((GameScreen) currentScreen).isStageCleared();
-                        gameState = ((GameScreen) currentScreen).getGameState();
-
-                        if (!stageCleared) {
-                            LOGGER.info("Stage " + gameState.getLevel()
-                                    + " failed. Not advancing.");
-                            break;
-                        }
-
-                        CampaignManager.updateMaxCampaignStage(
-                                Math.min(gameState.getLevel() + 1,
-                                        CampaignStageData.getTotalStages()));
-                        LOGGER.info("Highest Stage is: " + CampaignManager.getMaxCampaignStage());
-
-                        gameState = new GameState(gameState.getLevel() + 1,
-                                gameState.getScore(),
-                                gameState.getLivesRemaining(),
-                                gameState.getBulletsShot(),
-                                gameState.getShipsDestroyed());
-
-                    } while (gameState.getLivesRemaining() > 0
-                            && gameState.getLevel() <= CampaignStageData.getTotalStages());
-
-                    RunRecord completedRun = runSession.finish(gameState.getScore(),
-                            gameState.getShipsDestroyed(), System.currentTimeMillis());
-                    if (recordsService.completeRun(completedRun))
-                        LOGGER.info("Completed run recorded:\n" + RunRecordFormatter.format(completedRun));
-
-                    LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                            + " score screen at " + FPS + " fps, with a score of "
-                            + gameState.getScore() + ", "
-                            + gameState.getLivesRemaining() + " lives remaining, "
-                            + gameState.getBulletsShot() + " bullets shot and "
-                            + gameState.getShipsDestroyed() + " ships destroyed.");
-                    currentScreen = new ScoreScreen(width, height, FPS, gameState,
-                            recordsService.getCurrentRunUnlocks());
-                    returnCode = frame.setScreen(currentScreen);
-                    LOGGER.info("Closing score screen.");
-                    break;
-                case 3:
-                    // High scores.
-                    currentScreen = new HighScoreScreen(width, height, FPS);
-                    LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
-                            + " high score screen at " + FPS + " fps.");
-                    returnCode = frame.setScreen(currentScreen);
-                    LOGGER.info("Closing high score screen.");
-                    break;
-                case 9:
-                    currentScreen = new PlayerRecordsScreen(width, height, FPS, recordsService);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 10:
-                    // Shop.
-                    currentScreen = new ShopScreen(width, height, FPS, shopController);
-                    returnCode = frame.setScreen(currentScreen);
-                    resolveRewards(false);
-                    break;
-                case 11: {
-                    currentScreen = new HangarMenuScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                }
-
-                case 12: {
-                    ShipSelectionScreen shipSelection = new ShipSelectionScreen(width, height, FPS);
-                    currentScreen = shipSelection;
-                    int selectionResult = frame.setScreen(currentScreen);
-
-                    if (selectionResult == ShipSelectionScreen.SHIP_SELECTED) {
-                        selectedShip = shipSelection.getSelectedShip();
-                    }
-
-                    returnCode = 11;
-                    break;
-                }
-
-                case 13: {
-                    currentScreen = new HangarScreen(width, height, FPS);
-                    frame.setScreen(currentScreen);
-                    returnCode = 11;
-                    break;
-                }
-                case 4:
-                    currentScreen = new SettingsScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 5:
-                    currentScreen = new AudioControlScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 6:
-                    currentScreen = new ControlsSettingsScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
-                case 7:
-                    currentScreen = new GameplaySettingsScreen(width, height, FPS);
-                    returnCode = frame.setScreen(currentScreen);
-                    break;
+            case CAMPAIGN:
+                nextDestination = playCampaign(selectedShip, width, height);
+                break;
+            case HIGH_SCORES:
+                // High scores.
+                currentScreen = new HighScoreScreen(width, height, FPS);
+                LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                        + " high score screen at " + FPS + " fps.");
+                nextDestination = frame.setScreen(currentScreen);
+                LOGGER.info("Closing high score screen.");
+                break;
+            case PLAYER_RECORDS:
+                currentScreen = new PlayerRecordsScreen(width, height, FPS, recordsService);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
+            case SHOP:
+                // Shop.
+                currentScreen = new ShopScreen(width, height, FPS, shopController);
+                nextDestination = frame.setScreen(currentScreen);
+                resolveRewards(false);
+                break;
+            case HANGAR_MENU:
+                currentScreen = new HangarMenuScreen(width, height, FPS);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
+            case SHIP_SELECTION:
+                selectedShip = chooseShip(selectedShip, width, height);
+                nextDestination = Destination.HANGAR_MENU;
+                break;
+            case SHIP_CUSTOMIZATION:
+                currentScreen = new HangarScreen(width, height, FPS);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
+            case SETTINGS:
+                currentScreen = new SettingsScreen(width, height, FPS);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
+            case AUDIO_SETTINGS:
+                currentScreen = new AudioControlScreen(width, height, FPS);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
+            case CONTROLS_SETTINGS:
+                currentScreen = new ControlsSettingsScreen(width, height, FPS);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
+            case GAMEPLAY_SETTINGS:
+                currentScreen = new GameplaySettingsScreen(width, height, FPS);
+                nextDestination = frame.setScreen(currentScreen);
+                break;
             }
 
-            if (returnCode == 0 && !resolveRewards(true)) {
-                returnCode = 1;
+            if (nextDestination == Destination.EXIT && !resolveRewards(true)) {
+                nextDestination = Destination.TITLE;
             }
-        } while (returnCode != 0);
+        } while (nextDestination != Destination.EXIT);
 
         recordsService.close();
         if (recordsService.getSaveError() != null)
@@ -304,6 +219,93 @@ public final class Core {
         fileHandler.flush();
         fileHandler.close();
         System.exit(0);
+    }
+
+    /** Runs the campaign and returns the destination chosen on its score screen. */
+    private static Destination playCampaign(final ShipType selectedShip, final int width, final int height) {
+        // When starting a new game, reset the difficulty adjustment conditions (player has 1 life or less && player has not cleared 3 levels while on low difficulty)
+        DifficultyAdjustWhilePlaying.getInstance().reset();
+        // The selected ship decides how many lives the run starts with.
+        LOGGER.info("Selected ship: " + selectedShip.getName());
+
+        CampaignUpgrades campaignUpgrades = CampaignUpgrades.from(playerAssets.snapshot());
+        GameState gameState = new GameState(1, 0, campaignUpgrades.getMaxLives(selectedShip),
+                0, 0);
+
+        // Game & score.
+        RunSession runSession = new RunSession(UUID.randomUUID().toString());
+        campaignRewards.startRun(runSession.getRunId());
+        recordsService.startRun(runSession.getRunId());
+        do {
+            // One extra live every few levels.
+            boolean bonusLife = gameState.getLevel()
+                    % EXTRA_LIFE_FRECUENCY == 0
+                    && gameState.getLivesRemaining() < campaignUpgrades.getMaxLives(selectedShip);
+
+            currentScreen = new GameScreen(gameState,
+                    applyDifficulty(CampaignStageData
+                            .getStageSettings(gameState.getLevel())),
+                    bonusLife, width, height, FPS, selectedShip,
+                    runSession, campaignUpgrades);
+            LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                    + " game screen at " + FPS + " fps.");
+            runCampaignStage((GameScreen) currentScreen, campaignRewards,
+                    screen -> frame.setScreen(screen));
+            LOGGER.info("Closing game screen.");
+            resolveRewards(false);
+
+            boolean stageCleared = ((GameScreen) currentScreen).isStageCleared();
+            gameState = ((GameScreen) currentScreen).getGameState();
+
+            if (!stageCleared) {
+                LOGGER.info("Stage " + gameState.getLevel()
+                        + " failed. Not advancing.");
+                break;
+            }
+
+            CampaignManager.updateMaxCampaignStage(
+                    Math.min(gameState.getLevel() + 1,
+                            CampaignStageData.getTotalStages()));
+            LOGGER.info("Highest Stage is: " + CampaignManager.getMaxCampaignStage());
+
+            gameState = new GameState(gameState.getLevel() + 1,
+                    gameState.getScore(),
+                    gameState.getLivesRemaining(),
+                    gameState.getBulletsShot(),
+                    gameState.getShipsDestroyed());
+
+        } while (gameState.getLivesRemaining() > 0
+                && gameState.getLevel() <= CampaignStageData.getTotalStages());
+
+        RunRecord completedRun = runSession.finish(gameState.getScore(),
+                gameState.getShipsDestroyed(), System.currentTimeMillis());
+        if (recordsService.completeRun(completedRun))
+            LOGGER.info("Completed run recorded:\n" + RunRecordFormatter.format(completedRun));
+
+        LOGGER.info("Starting " + WIDTH + "x" + HEIGHT
+                + " score screen at " + FPS + " fps, with a score of "
+                + gameState.getScore() + ", "
+                + gameState.getLivesRemaining() + " lives remaining, "
+                + gameState.getBulletsShot() + " bullets shot and "
+                + gameState.getShipsDestroyed() + " ships destroyed.");
+        currentScreen = new ScoreScreen(width, height, FPS, gameState,
+                recordsService.getCurrentRunUnlocks());
+        Destination nextDestination = frame.setScreen(currentScreen);
+        LOGGER.info("Closing score screen.");
+        return nextDestination;
+    }
+
+    /** Returns the chosen ship, or the current ship when selection is cancelled. */
+    private static ShipType chooseShip(final ShipType current, final int width, final int height) {
+        ShipSelectionScreen shipSelection = new ShipSelectionScreen(width, height, FPS);
+        currentScreen = shipSelection;
+        frame.setScreen(currentScreen);
+
+        if (shipSelection.wasSelectionConfirmed()) {
+            return shipSelection.getSelectedShip();
+        }
+
+        return current;
     }
 
     /** Registers rewards only for the official Campaign and releases the stage listener on exit. */

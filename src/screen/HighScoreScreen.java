@@ -31,7 +31,7 @@ public class HighScoreScreen extends Screen {
     public HighScoreScreen(final int width, final int height, final int fps) {
         super(width, height, fps);
 
-        this.returnCode = 1;
+        this.nextDestination = Destination.TITLE;
 
         try {
             this.highScores = Core.getFileManager().loadHighScores();
@@ -41,18 +41,6 @@ public class HighScoreScreen extends Screen {
 
         AudioManager.playBGM("audio/bgm/music_menu.wav");
 
-
-    }
-
-    /**
-     * Starts the action.
-     *
-     * @return Next screen code.
-     */
-    public final int run() {
-        super.run();
-
-        return this.returnCode;
     }
 
     /**
