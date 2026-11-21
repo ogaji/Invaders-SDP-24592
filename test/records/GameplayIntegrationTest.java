@@ -119,7 +119,12 @@ public final class GameplayIntegrationTest {
         check(new HashSet<String>(events).size()==2, path+" supplies distinct event IDs");
         check(game.getGameState().getShipsDestroyed()==2, path+" preserves upstream kill totals");
         set(game,"levelFinished",true);
-        call(game,"manageAnnihilatorBeam"); call(game,"manageCollisions");
+        EnemyShip lateTarget = new EnemyShip();
+        lateTarget.setPositionX(player.getPositionX());
+        lateTarget.setPositionY(80);
+        set(get(game,"bonusEnemyManager"),"bonusShip",lateTarget);
+        incoming.add(BulletPool.getBullet(lateTarget.getPositionX()+4,lateTarget.getPositionY()+4,-4));
+        call(game,"update");
         check(events.size()==2,path+" does not count kills after the stage ends");
     }
 }

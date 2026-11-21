@@ -87,13 +87,6 @@ public class GameScreen extends Screen {
     private static final int FALLING_OBSTACLE_INTERVAL = 17500;
     /** Spawn interval varies from fifteen to twenty seconds. */
     private static final int FALLING_OBSTACLE_VARIANCE = 2500;
-    /**
-     * Enables the debug keys used to exercise player status by hand. Off
-     * unless the game is started with -Dinvaders.debugKeys=true, so a normal
-     * play session on main never has them.
-     */
-    private static final boolean DEBUG_KEYS =
-            Boolean.getBoolean("invaders.debugKeys");
     /** Height of the interface separation line. */
     private static final int SEPARATION_LINE_HEIGHT = 40;
     /** Damage dealt to the boss by one player shot (to confirm with the
@@ -121,8 +114,6 @@ public class GameScreen extends Screen {
             "audio/sfx/boss_explosion.wav";
     /** Stages where a boss appears (agreed with the team, may change). */
     static final int[] BOSS_LEVELS = { 3, 5, 7 };
-    /** Time the space key must be held to trigger the Annihilator. */
-    private static final int ANNIHILATOR_HOLD_TIME = 1000;
     /** Chance for a destroyed enemy ship to drop a Cluster Grenade item. */
     private static final double GRENADE_DROP_CHANCE = 0.15;
     /** Fixed altitude (Y) where a grenade explodes if it hits nothing. */
@@ -157,7 +148,7 @@ public class GameScreen extends Screen {
     /** Fragments of exploded grenades. */
     private Set<GrenadeFragment> fragments;
     /** Prevents launching several grenades while holding G. */
-    private boolean grenadeKeyPressed = false;
+    private boolean grenadeKeyWasDown;
     /** Number of Cluster Grenade items dropped in this level. */
     private int grenadeDropsThisLevel = 0;
     /** Ships destroyed when the level started, for the Twin Cannon spawn. */
@@ -199,8 +190,6 @@ public class GameScreen extends Screen {
     private final FloatingScoreHud floatingScoreHud = new FloatingScoreHud();
     /** Player lives left. */
     private PlayerStatus playerStatus;
-    /** State of the debug shield key on the previous frame. */
-    private boolean shieldDebugKeyWasDown;
     /** Total bullets shot by the player. */
     private int bulletsShot;
     /** Total ships destroyed by the player. */
@@ -215,8 +204,6 @@ public class GameScreen extends Screen {
     private boolean bonusLife;
     /** Orbital Annihilator (Doomsday Laser), only available on level 7. */
     private OrbitalAnnihilator annihilator;
-    /** Moment the space key started being held, 0 if not held. */
-    private long spaceHeldSince;
     /** Last countdown number that played a sound. */
     private int lastCountdown = -1;
     private RunSession runSession;
@@ -227,8 +214,6 @@ public class GameScreen extends Screen {
     private final Map<EnemyShip,String> defeatIds = new IdentityHashMap<EnemyShip,String>();
     /** Separates the enemy type from the random part of a defeat ID. */
     static final String DEFEAT_ID_SEPARATOR = ":";
-    /** Prevents repeated activation while holding H. */
-    private boolean hyperfireKeyPressed = false;
     /** Flag to track if the urgent low-health BGM is currently playing. */
     private boolean isLowHealthBGM = false;
 
@@ -493,11 +478,10 @@ public class GameScreen extends Screen {
         this.chameleonDroppedThisLevel = false;
         this.hyperfireDroppedThisLevel = false;
         this.annihilatorDroppedThisLevel = false;
-        this.hyperfireKeyPressed = false;
 
         this.grenades = new HashSet<Grenade>();
         this.fragments = new HashSet<GrenadeFragment>();
-        this.grenadeKeyPressed = false;
+        this.grenadeKeyWasDown = false;
         this.grenadeDropsThisLevel = 0;
         this.shipsDestroyedAtStart = this.shipsDestroyed;
         this.twinCanonSpawned = false;
@@ -588,12 +572,37 @@ public class GameScreen extends Screen {
         return this.nextDestination;
     }
 
-    /**
-     * Updates the elements on screen, checks for events, and plays the bonus
-     * enemy appearance sound.
-     */
+    /** Advances one frame and draws the resulting stage state. */
     protected final void update() {
         super.update();
+        updateAchievementNotice();
+        updatePlayerStatus();
+
+        boolean countdownFinished = this.inputDelay.checkFinished();
+        if (countdownFinished && !this.levelFinished) {
+            updateRunTiming();
+            handlePlayerInput();
+            updateWorld();
+            updateItems();
+            resolveCollisions();
+        } else {
+            manageGrenades(false);
+        }
+
+        cleanBullets();
+        this.particleSystem.update();
+        advanceStageIfReady();
+        if (this.levelFinished)
+            this.fallingObstacles.clear();
+
+        this.ship.update();
+        draw(countdownFinished);
+
+        if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
+            this.isRunning = false;
+    }
+
+    private void updateAchievementNotice() {
         if (this.recordsService != null) {
             long now = System.currentTimeMillis();
             if (this.visibleAchievement == null || now >= this.achievementNoticeUntil) {
@@ -604,176 +613,130 @@ public class GameScreen extends Screen {
                 this.achievementNoticeUntil = this.visibleAchievement == null ? 0 : now + 3000;
             }
         }
+    }
 
+    private void updatePlayerStatus() {
         // Outside the input-delay check: a shield that runs out has to be
         // announced even while the level is finishing.
         this.playerStatus.update();
         // Sends the current number of lives remaining to the DifficultyAdjustWhilePlaying class
         DifficultyAdjustWhilePlaying.getInstance().update(this.playerStatus.getLives());
-        // Reconcile shields active outside the item-collision path.
+        // A shield already active at the start of the frame clears slow before movement.
         clearSlowIfEnergyShieldActive();
+    }
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished) {
-            if (this.runSession != null) this.runSession.startActiveSegment(System.nanoTime());
-            if (this.runSession != null && this.recordsService != null)
-                this.recordsService.activeDuration(this.runSession.getRunId(),
-                        this.runSession.getActiveDurationMillis(System.nanoTime()));
+    private void updateRunTiming() {
+        if (this.runSession != null) this.runSession.startActiveSegment(System.nanoTime());
+        if (this.runSession != null && this.recordsService != null)
+            this.recordsService.activeDuration(this.runSession.getRunId(),
+                    this.runSession.getActiveDurationMillis(System.nanoTime()));
+    }
 
-            if (!this.ship.isDestroyed()) {
-                boolean moveRight = inputManager.isKeyDown(
-                        ControlsConfig.getKey(ControlsConfig.RIGHT));
-                boolean moveLeft = inputManager.isKeyDown(
-                        ControlsConfig.getKey(ControlsConfig.LEFT));
+    private void updateWorld() {
+        this.bonusEnemyManager.update(this.width);
 
-                boolean isRightBorder = this.ship.getPositionX()
-                        + this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
-                boolean isLeftBorder = this.ship.getPositionX()
-                        - this.ship.getSpeed() < 1;
-
-                if (moveRight && !isRightBorder) {
-                    this.ship.moveRight();
-                    clampShipPosition();
-                }
-                if (moveLeft && !isLeftBorder) {
-                    this.ship.moveLeft();
-                    clampShipPosition();
-                }
-
-                // Normal shooting using configured controls.
-                if (inputManager.isKeyDown(
-                        ControlsConfig.getKey(ControlsConfig.FIRE))) {
-                    if (!this.annihilator.isCharging()) {
-                        int fired = this.ship.shoot(this.bullets);
-                        this.bulletsShot += fired;
-                        if (fired > 0) {
-                            AudioManager.playSFX("audio/sfx/player_shoot.wav");
-                        }
-                    }
-                }
-
-                // Hyperfire test activation with the H key, only with the
-                // debug keys enabled so normal play cannot get it for free.
-                if (DEBUG_KEYS) {
-                    boolean hyperfireKeyDown =
-                            inputManager.isKeyDown(KeyEvent.VK_H);
-                    if (hyperfireKeyDown && !this.hyperfireKeyPressed) {
-                        this.itemManager.getBuffManager().addBuff(
-                                new Hyperfire(0, 0), this.ship);
-                    }
-                    this.hyperfireKeyPressed = hyperfireKeyDown;
-                }
-
-                // Cluster Grenade launch with the G key. Ignored if G is
-                // also bound to movement or firing, so one press cannot do
-                // both and waste a grenade.
-                boolean grenadeKeyDown = !isGrenadeKeyBoundElsewhere()
-                        && inputManager.isKeyDown(KeyEvent.VK_G);
-                if (grenadeKeyDown && !this.grenadeKeyPressed) {
-                    if (this.ship.launchGrenade(this.grenades, GRENADE_DETONATION_Y))
-                        AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
-                }
-                this.grenadeKeyPressed = grenadeKeyDown;
-
-                // Orbital Annihilator charging mechanic.
-                if (inputManager.isKeyDown(KeyEvent.VK_SPACE)) {
-                    if (!this.annihilator.isReady()) {
-                        this.spaceHeldSince = 0;
-                    } else if (this.spaceHeldSince == 0) {
-                        this.spaceHeldSince = System.currentTimeMillis();
-                    }
-
-                    if (this.spaceHeldSince != 0
-                            && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
-                            && System.currentTimeMillis() - this.spaceHeldSince >= ANNIHILATOR_HOLD_TIME) {
-                        this.annihilator.trigger();
-                        // Charging stops the ship shooting, so a burst that
-                        // is still owed is dropped rather than fired when
-                        // the beam is over.
-                        this.ship.cancelBurst();
-                    }
-                } else {
-                    this.spaceHeldSince = 0;
-                }
-
-                // Temporary: the shield has no in-game source until B5 adds
-                // the buff item, so it cannot be verified by playing without
-                // this key. Removed in that PR.
-                if (DEBUG_KEYS) {
-                    boolean shieldKeyDown = inputManager
-                            .isKeyDown(KeyEvent.VK_F2);
-                    // Fires on the press, not every frame the key is held,
-                    // so holding F2 cannot chain shields over the expiry and
-                    // hide the very timing this key exists to show.
-                    if (shieldKeyDown && !this.shieldDebugKeyWasDown) {
-                        if (this.playerStatus.activateShield())
-                            this.logger.info("Debug shield granted.");
-                        else
-                            this.logger.info("Debug shield refused (ship not "
-                                    + "shield-capable).");
-                    }
-                    this.shieldDebugKeyWasDown = shieldKeyDown;
-                }
-            } else {
-                // Cancel charging when the ship is destroyed.
-                this.annihilator.cancelCharge();
-                this.spaceHeldSince = 0;
-            }
-
-            this.bonusEnemyManager.update(this.width);
-
-            Boss boss = getBossOnScreen();
-            if (boss != null) {
-                boss.update(1, this.width - 1);
-                this.bossManager.update(
-                        this.ship.getPositionX() + this.ship.getWidth() / 2,
-                        this.ship.getPositionY(), this.bossBullets);
-            }
-
-            if (!this.ship.isDestroyed() && !this.annihilator.isCharging())
-                this.bulletsShot += this.ship.updateBurst(this.bullets);
-
-            updateBallMovement();
-
-            this.annihilator.update();
-            this.enemyShipFormation.update();
-            this.enemyShipFormation.shoot(this.bullets, this.ship);
+        Boss boss = getBossOnScreen();
+        if (boss != null) {
+            boss.update(1, this.width - 1);
+            this.bossManager.update(
+                    this.ship.getPositionX() + this.ship.getWidth() / 2,
+                    this.ship.getPositionY(), this.bossBullets);
         }
 
-        this.ship.update();
+        updateBallMovement();
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished)
-            updateTwinCanonItem();
+        this.enemyShipFormation.update();
+        this.enemyShipFormation.shoot(this.bullets, this.ship);
+    }
 
-        if (this.inputDelay.checkFinished() && !this.levelFinished) {
-            this.itemManager.update(this.ship);
+    private void updateItems() {
+        updateTwinCanonItem();
+        this.itemManager.update(this.ship);
 
-            if (!this.ship.isDestroyed()) {
-                this.itemManager.checkCollisions(this.ship);
-                // Clear immediately in the frame an Energy Shield is collected.
-                clearSlowIfEnergyShieldActive();
-            }
-
-            clampShipPosition();
-            clampBallPositionY();
+        if (!this.ship.isDestroyed()) {
+            this.itemManager.checkCollisions(this.ship);
+            // A shield picked up this frame must clear slow before hazard collisions.
+            clearSlowIfEnergyShieldActive();
         }
 
-        if (!updateFallingObstacles())
-            manageFallingObstacleCollisions();
+        // A Chameleon Hull pickup or expiry can change the bounds after movement.
+        clampShipPosition();
+        clampBallPositionY();
+    }
+
+    private void resolveCollisions() {
+        updateFallingObstacles();
         manageCollisions();
-        manageGrenades();
+        manageGrenades(true);
         manageBallContact();
 
         if (this.annihilator.isFiring())
             manageAnnihilatorBeam();
+    }
 
-        cleanBullets();
-        this.particleSystem.update();
-        draw();
+    private void handlePlayerInput() {
+        boolean grenadePressed = readGrenadePress();
+        if (this.ship.isDestroyed()) {
+            this.annihilator.cancelCharge();
+        } else {
+            moveShipHorizontally();
+            firePlayerWeapon();
+            if (grenadePressed
+                    && this.ship.launchGrenade(this.grenades, GRENADE_DETONATION_Y))
+                AudioManager.playSFX("audio/sfx/item_grenade_launch.wav");
 
-        advanceStageIfReady();
+            if (this.annihilator.handleChargeInput(
+                    inputManager.isKeyDown(KeyEvent.VK_SPACE), this.level)) {
+                this.ship.cancelBurst();
+            }
+            // A burst emits its pending rounds separately from a new shot.
+            // Check after Space handling so a new charge suppresses that burst.
+            if (!this.annihilator.isCharging())
+                this.bulletsShot += this.ship.updateBurst(this.bullets);
+        }
+        this.annihilator.update();
+    }
 
-        if (this.levelFinished && this.screenFinishedCooldown.checkFinished())
-            this.isRunning = false;
+    private void moveShipHorizontally() {
+        boolean moveRight = inputManager.isKeyDown(
+                ControlsConfig.getKey(ControlsConfig.RIGHT));
+        boolean moveLeft = inputManager.isKeyDown(
+                ControlsConfig.getKey(ControlsConfig.LEFT));
+
+        boolean isRightBorder = this.ship.getPositionX()
+                + this.ship.getWidth() + this.ship.getSpeed() > this.width - 1;
+        boolean isLeftBorder = this.ship.getPositionX()
+                - this.ship.getSpeed() < 1;
+
+        // Chameleon movement can overshoot the base-speed check in either direction.
+        if (moveRight && !isRightBorder) {
+            this.ship.moveRight();
+            clampShipPosition();
+        }
+        if (moveLeft && !isLeftBorder) {
+            this.ship.moveLeft();
+            clampShipPosition();
+        }
+    }
+
+    private void firePlayerWeapon() {
+        if (!this.annihilator.isCharging() && inputManager.isKeyDown(
+                ControlsConfig.getKey(ControlsConfig.FIRE))) {
+            int fired = this.ship.shoot(this.bullets);
+            this.bulletsShot += fired;
+            if (fired > 0) {
+                AudioManager.playSFX("audio/sfx/player_shoot.wav");
+            }
+        }
+    }
+
+    private boolean readGrenadePress() {
+        // A press during hit recovery is consumed while the ship cannot throw.
+        boolean keyDown = !isGrenadeKeyBoundElsewhere()
+                && inputManager.isKeyDown(KeyEvent.VK_G);
+        boolean pressed = keyDown && !this.grenadeKeyWasDown;
+        this.grenadeKeyWasDown = keyDown;
+        return pressed;
     }
 
     /** Progression shared by official and custom stages. */
@@ -857,7 +820,7 @@ public class GameScreen extends Screen {
     /**
      * Draws the elements associated with the screen.
      */
-    private void draw() {
+    private void draw(final boolean countdownFinished) {
         drawManager.initDrawing(this);
 
         if (this.annihilator.isCharging() || this.annihilator.isFiring())
@@ -945,7 +908,7 @@ public class GameScreen extends Screen {
         drawManager.drawHorizontalLine(this, SEPARATION_LINE_HEIGHT - 1);
 
         // Countdown to game start.
-        if (!this.inputDelay.checkFinished()) {
+        if (!countdownFinished) {
             int countdown = (int) ((INPUT_DELAY
                     - (System.currentTimeMillis()
                     - this.gameStartTime)) / 1000);
@@ -995,24 +958,8 @@ public class GameScreen extends Screen {
         this.bossBullets.removeAll(outside);
     }
 
-    /** Creates, advances, and retires the non-damaging falling hazards. */
-    private boolean updateFallingObstacles() {
-        if (this.levelFinished) {
-            this.fallingObstacles.clear();
-            return false;
-        }
-        if (!this.inputDelay.checkFinished())
-            return false;
-
-        if (this.fallingObstacles.isEmpty()
-                && this.fallingObstacleCooldown.checkFinished()) {
-            int rightmostX = this.width - FallingObstacle.WIDTH - 1;
-            int positionX = 1 + this.obstacleRandom.nextInt(rightmostX);
-            this.fallingObstacles.add(new FallingObstacle(positionX,
-                    SEPARATION_LINE_HEIGHT));
-            return true;
-        }
-
+    /** Advances existing hazards and spawns new ones after collisions. */
+    private void updateFallingObstacles() {
         for (Iterator<FallingObstacle> iterator =
                 this.fallingObstacles.iterator(); iterator.hasNext();) {
             FallingObstacle obstacle = iterator.next();
@@ -1022,14 +969,20 @@ public class GameScreen extends Screen {
                 this.fallingObstacleCooldown.reset();
             }
         }
-        return false;
+        manageFallingObstacleCollisions();
+
+        // A new obstacle gets one frame at its spawn position before it can hit.
+        if (this.fallingObstacles.isEmpty()
+                && this.fallingObstacleCooldown.checkFinished()) {
+            int rightmostX = this.width - FallingObstacle.WIDTH - 1;
+            int positionX = 1 + this.obstacleRandom.nextInt(rightmostX);
+            this.fallingObstacles.add(new FallingObstacle(positionX,
+                    SEPARATION_LINE_HEIGHT));
+        }
     }
 
     /** Consumes a colliding hazard, applying only the existing slow effect. */
     private void manageFallingObstacleCollisions() {
-        if (!this.inputDelay.checkFinished() || this.levelFinished)
-            return;
-
         for (Iterator<FallingObstacle> iterator =
              this.fallingObstacles.iterator(); iterator.hasNext();) {
             FallingObstacle obstacle = iterator.next();
@@ -1059,12 +1012,10 @@ public class GameScreen extends Screen {
      * Manages collisions between bullets and ships.
      */
     private void manageCollisions() {
-        if (this.levelFinished)
-            return;
         Set<Bullet> recyclable = new HashSet<Bullet>();
         for (Bullet bullet : this.bullets) {
             if (bullet.isEnemyBullet()) {
-                if (checkCollision(bullet, this.ship) && !this.levelFinished) {
+                if (checkCollision(bullet, this.ship)) {
                     recyclable.add(bullet);
                     damagePlayer(1, "Hit on player ship");
                 }
@@ -1153,7 +1104,7 @@ public class GameScreen extends Screen {
 
         Set<BossBullet> hitBossBullets = new HashSet<BossBullet>();
         for (BossBullet bossBullet : this.bossBullets) {
-            if (checkCollision(bossBullet, this.ship) && !this.levelFinished) {
+            if (checkCollision(bossBullet, this.ship)) {
                 hitBossBullets.add(bossBullet);
                 damagePlayer(bossBullet.getDamage(),
                         "Hit on player ship by the boss");
@@ -1167,7 +1118,6 @@ public class GameScreen extends Screen {
      * corridor and neutralizes enemy projectiles inside it.
      */
     private void manageAnnihilatorBeam() {
-        if (this.levelFinished) return;
         boolean enemyDestroyed = false;
         for (EnemyShip enemyShip : this.enemyShipFormation) {
             if (!enemyShip.isDestroyed()
@@ -1621,7 +1571,6 @@ public class GameScreen extends Screen {
     private void tryDropChameleonHull(final EnemyShip enemy) {
         if (!this.chameleonDroppedThisLevel
                 && this.level >= ChameleonHull.REQUIRED_LEVEL
-                && !this.levelFinished
                 && this.playerStatus.isAlive()
                 && this.itemDropRandom.nextDouble() < ChameleonHull.DROP_CHANCE) {
 
@@ -1672,10 +1621,7 @@ public class GameScreen extends Screen {
 
     /** Contact kills use the existing score, destruction and drop systems. */
     private void manageBallContact() {
-        if (!this.inputDelay.checkFinished()
-                || this.levelFinished
-                || this.ship.isDestroyed()
-                || !this.ship.isChameleonHullActive()) {
+        if (this.ship.isDestroyed() || !this.ship.isChameleonHullActive()) {
             return;
         }
         boolean enemyDestroyed = false;
@@ -1746,8 +1692,7 @@ public class GameScreen extends Screen {
      *            Destroyed enemy ship.
      */
     private void tryDropGrenade(final EnemyShip enemyShip) {
-        if (!this.levelFinished
-                && this.grenadeDropsThisLevel < MAX_GRENADE_DROPS_PER_LEVEL
+        if (this.grenadeDropsThisLevel < MAX_GRENADE_DROPS_PER_LEVEL
                 && Math.random() < GRENADE_DROP_CHANCE) {
             this.grenadeDropsThisLevel++;
             this.itemManager.spawnItem(new ClusterGrenadeItem(
@@ -1765,7 +1710,6 @@ public class GameScreen extends Screen {
      */
     private void tryDropAnnihilator(final EnemyShip enemyShip) {
         if (!this.annihilatorDroppedThisLevel
-                && !this.levelFinished
                 && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
                 && Math.random() < ANNIHILATOR_DROP_CHANCE) {
             this.itemManager.spawnItem(new AnnihilatorItem(
@@ -1785,7 +1729,7 @@ public class GameScreen extends Screen {
      *            Destroyed bonus ship.
      */
     private void tryDropHyperfire(final EnemyShip bonusShip) {
-        if (!this.hyperfireDroppedThisLevel && !this.levelFinished
+        if (!this.hyperfireDroppedThisLevel
                 && bonusShip != null) {
             this.itemManager.spawnItem(new Hyperfire(
                     bonusShip.getPositionX(), bonusShip.getPositionY()));
@@ -1796,12 +1740,10 @@ public class GameScreen extends Screen {
 
     /**
      * Moves the grenades and their fragments. Once the stage has ended,
-     * they keep moving but no longer hit anything, so the score, kill count
-     * and defeat events cannot change after the end.
+     * they keep moving without dealing damage. Pass {@code canHit} only
+     * while the stage is in progress.
      */
-    private void manageGrenades() {
-        boolean canHit = !this.levelFinished;
-
+    private void manageGrenades(final boolean canHit) {
         Set<Grenade> exploded = new HashSet<Grenade>();
         for (Grenade grenade : this.grenades) {
             grenade.update();
