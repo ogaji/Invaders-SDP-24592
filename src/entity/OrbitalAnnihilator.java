@@ -1,7 +1,5 @@
-package entity.item;
+package entity;
 
-import entity.Entity;
-import entity.Ship;
 import audio.AudioManager;
 /**
  * Orbital Annihilator (Doomsday Laser). Once

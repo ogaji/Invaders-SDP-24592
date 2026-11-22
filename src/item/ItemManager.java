@@ -1,4 +1,4 @@
-package entity.item;
+package item;
 
 import engine.DrawManager;
 import entity.Ship;
@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import audio.AudioManager;
+import entity.item.ClusterGrenadeItem;
+import entity.item.Item;
 
 public class ItemManager {
 

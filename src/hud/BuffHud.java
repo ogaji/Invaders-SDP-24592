@@ -1,4 +1,4 @@
-package entity.item;
+package hud;
 
 import java.util.ArrayList;
 import java.util.Collections;
