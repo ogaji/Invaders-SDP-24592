@@ -1,4 +1,4 @@
-package engine;
+package campaign;
 
 import currency.PermanentUpgrade;
 import currency.PlayerAssetsState;

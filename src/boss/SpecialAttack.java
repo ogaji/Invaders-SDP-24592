@@ -5,7 +5,7 @@ import java.util.List;
 
 import engine.Cooldown;
 import engine.Core;
-import engine.DifficultyAdjustWhilePlaying;
+import campaign.DifficultyAdjustWhilePlaying;
 import entity.BossBullet;
 
 /**

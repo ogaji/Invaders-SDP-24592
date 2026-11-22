@@ -1,4 +1,4 @@
-package engine;
+package vfx;
 
 import java.awt.Color;
 import java.awt.Graphics;

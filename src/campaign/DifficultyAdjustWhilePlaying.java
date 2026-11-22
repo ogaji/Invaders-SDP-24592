@@ -1,4 +1,4 @@
-package engine;
+package campaign;
 
 /**
  * A temporary difficulty adjustment when the lives of the player is 1.

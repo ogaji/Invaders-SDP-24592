@@ -4,7 +4,7 @@ import audio.AudioManager;
 import campaign.CampaignStageData;
 import currency.PermanentUpgrade;
 import currency.PlayerAssetsState;
-import engine.CampaignUpgrades;
+import campaign.CampaignUpgrades;
 import engine.GameState;
 import entity.Ship;
 import entity.ShipType;

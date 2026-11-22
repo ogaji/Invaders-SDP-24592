@@ -2,7 +2,7 @@ package boss;
 
 import java.util.List;
 
-import engine.DifficultyAdjustWhilePlaying;
+import campaign.DifficultyAdjustWhilePlaying;
 import entity.Boss;
 import entity.BossBullet;
 import org.junit.jupiter.api.AfterEach;
