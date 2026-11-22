@@ -7,7 +7,7 @@ import entity.FallingObstacle;
 import entity.PlayerStatus;
 import entity.Ship;
 import entity.ShipType;
-import entity.item.ItemManager;
+import item.ItemManager;
 import entity.item.ShieldItem;
 import event.GameplayEventListener;
 import java.lang.reflect.Field;

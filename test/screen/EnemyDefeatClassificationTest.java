@@ -12,7 +12,7 @@ import entity.EnemyShip;
 import entity.EnemyShipFormation;
 import entity.GrenadeFragment;
 import entity.Ship;
-import entity.item.OrbitalAnnihilator;
+import entity.OrbitalAnnihilator;
 import event.DefeatedEnemyType;
 import event.EnemyDefeatedEvent;
 import event.GameplayEventListener;

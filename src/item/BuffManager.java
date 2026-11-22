@@ -1,10 +1,13 @@
-package entity.item;
+package item;
 
 import entity.Ship;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import audio.AudioManager;
+import entity.item.ChameleonHull;
+import entity.item.Item;
+import entity.item.ShieldItem;
 
 public class BuffManager {
 

@@ -1,6 +1,7 @@
 package entity.item;
 
 import engine.DrawManager.SpriteType;
+import entity.OrbitalAnnihilator;
 import entity.Ship;
 
 /**
