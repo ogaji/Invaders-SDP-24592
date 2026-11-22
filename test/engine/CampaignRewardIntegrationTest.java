@@ -2,6 +2,7 @@ package engine;
 
 import audio.AudioManager;
 import campaign.CampaignStageData;
+import campaign.CampaignUpgrades;
 import currency.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PurchaseResult;

@@ -38,6 +38,8 @@ import screen.ShipSelectionScreen;
 import screen.PlayerRecordsScreen;
 import campaign.CampaignStageData;
 import campaign.CampaignManager;
+import campaign.CampaignUpgrades;
+import campaign.DifficultyAdjustWhilePlaying;
 import screen.SettingsScreen;
 import screen.ControlsSettingsScreen;
 import screen.GameplaySettingsScreen;

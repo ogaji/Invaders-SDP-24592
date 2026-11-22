@@ -13,7 +13,7 @@ import engine.DrawManager;
 import engine.InputManager;
 
 import java.awt.Graphics;
-import engine.Starfield;
+import vfx.Starfield;
 
 /**
  * Implements a generic screen.

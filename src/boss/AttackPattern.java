@@ -3,7 +3,7 @@ package boss;
 import java.util.ArrayList;
 import java.util.List;
 
-import engine.DifficultyAdjustWhilePlaying;
+import campaign.DifficultyAdjustWhilePlaying;
 import entity.BossBullet;
 
 /**
