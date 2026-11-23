@@ -1,11 +1,12 @@
 package shop;
 
-import currency.ShopCatalog.Category;
 import entity.ShipType;
 import java.util.Locale;
 
-/** Immutable product details. Purchase prices are registered in ShopCatalog. */
+/** Immutable details of a shop product. */
 public final class ShopProduct {
+    public enum Category { UPGRADE, UNLOCKABLE }
+
     private final String id;
     private final String name;
     private final Category category;
@@ -56,10 +57,14 @@ public final class ShopProduct {
     /** Default availability does not grant or persist permanent ownership. */
     public static ShopProduct ship(ShipType type, boolean availableByDefault, int price) {
         if (type == null) throw new IllegalArgumentException("Ship type is required.");
-        return new ShopProduct("ship." + type.name().toLowerCase(Locale.ROOT),
+        return new ShopProduct(shipId(type),
                 type.getName(), Category.UNLOCKABLE, price,
                 availableByDefault ? "Select in Hangar." : "Unlock for Hangar.", null,
                 type, availableByDefault);
+    }
+
+    static String shipId(ShipType type) {
+        return "ship." + type.name().toLowerCase(Locale.ROOT);
     }
 
     public ShipType getShipType() {

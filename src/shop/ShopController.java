@@ -2,67 +2,54 @@ package shop;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.ShopCatalog;
-import currency.ShopCatalog.Category;
 import engine.Core;
-import engine.FileManager;
 import entity.ShipType;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /** Coordinates permanent purchases and saving on the gameplay thread. */
 public final class ShopController {
     public enum SaveStatus { NOT_NEEDED, SAVED, FAILED }
 
-    interface AssetSaver {
+    public interface AssetSaver {
         void save(PlayerAssetsState state) throws IOException;
     }
 
     private final PlayerAssets assets;
     private final AssetSaver saver;
     private final PurchaseSystem purchases;
-    private final List<ShopProduct> products;
+    private final Map<String, ShopProduct> productsById;
     private SaveStatus saveStatus = SaveStatus.NOT_NEEDED;
 
-    public ShopController(PlayerAssets assets, FileManager files) {
-        this(assets, files, ShopProducts.availableProducts());
-    }
-
-    public ShopController(PlayerAssets assets, FileManager files, List<ShopProduct> definitions) {
-        this(assets, files, definitions, state -> files.savePlayerAssets(state));
-    }
-
-    ShopController(PlayerAssets assets, FileManager files, List<ShopProduct> definitions, AssetSaver saver) {
-        if (assets == null || files == null || definitions == null || saver == null) {
+    public ShopController(PlayerAssets assets, List<ShopProduct> definitions, AssetSaver saver) {
+        if (assets == null || definitions == null || saver == null) {
             throw new IllegalArgumentException("Shop dependencies cannot be null.");
         }
         this.assets = assets;
         this.saver = saver;
-        ShopCatalog catalog = new ShopCatalog();
-        List<ShopProduct> listed = new ArrayList<ShopProduct>();
-        Set<String> ids = new HashSet<String>();
+        Map<String, ShopProduct> indexed = new LinkedHashMap<>();
         for (ShopProduct product : definitions) {
             if (product == null) throw new IllegalArgumentException("Product cannot be null.");
-            if (!ids.add(product.getId())) {
+            if (indexed.containsKey(product.getId())) {
                 throw new IllegalArgumentException("Duplicate product: " + product.getId());
             }
-            listed.add(product);
-            if (product.isAvailableByDefault()) continue;
-            boolean registered = product.getCategory() == Category.UPGRADE
-                    ? catalog.registerUpgrade(product.getId(), product.getPrice(), product.getRequiredUnlockId())
-                    : catalog.registerUnlockable(product.getId(), product.getPrice(), product.getRequiredUnlockId());
-            if (!registered) throw new IllegalArgumentException("Duplicate or invalid product: " + product.getId());
+            String requiredId = product.getRequiredUnlockId();
+            // An earlier definition is required so prerequisite chains cannot cycle.
+            if (requiredId != null && !indexed.containsKey(requiredId)) {
+                throw new IllegalArgumentException("Prerequisite for " + product.getId()
+                        + " must be listed earlier: " + requiredId);
+            }
+            indexed.put(product.getId(), product);
         }
-        products = Collections.unmodifiableList(listed);
-        purchases = new PurchaseSystem(assets, catalog);
+        productsById = Collections.unmodifiableMap(indexed);
+        purchases = new PurchaseSystem(assets, productsById);
     }
 
     public synchronized List<ShopProduct> getProducts() {
-        return ShopProducts.visibleProducts(products, assets.snapshot());
+        return ShopProducts.visibleProducts(productsById.values(), assets.snapshot());
     }
 
     /** Current spendable Credits, without copying ownership or legacy save data. */
@@ -73,12 +60,8 @@ public final class ShopController {
     /** Uses the same ship availability and saved ownership as the Shop. */
     public synchronized boolean isShipAvailable(ShipType type) {
         if (type == null) return false;
-        for (ShopProduct product : products) {
-            if (product.getShipType() == type) {
-                return product.isAvailableByDefault() || assets.isUnlocked(product.getId());
-            }
-        }
-        return false;
+        ShopProduct product = productsById.get(ShopProduct.shipId(type));
+        return product != null && product.getShipType() == type && purchases.isAvailable(product);
     }
 
     public synchronized PlayerAssetsState snapshot() {
@@ -91,12 +74,7 @@ public final class ShopController {
     }
 
     public synchronized PurchaseResult purchase(String productId) {
-        for (ShopProduct product : products) {
-            if (product.getId().equals(productId) && product.isAvailableByDefault()) {
-                return PurchaseResult.ALREADY_UNLOCKED;
-            }
-        }
-        PurchaseResult result = purchases.purchaseUnlockable(productId);
+        PurchaseResult result = purchases.purchase(productId);
         if (result == PurchaseResult.SUCCESS) saveLatestAssets();
         return result;
     }

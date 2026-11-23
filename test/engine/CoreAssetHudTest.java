@@ -131,7 +131,7 @@ class CoreAssetHudTest {
         assertEquals(PurchaseResult.SUCCESS, shop.purchase(hull));
         byte[] saved = Files.readAllBytes(save);
 
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase(hull));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase(hull));
         assertEquals(100, Core.getAssetHudSnapshot().getCredits());
         assertArrayEquals(saved, Files.readAllBytes(save));
     }

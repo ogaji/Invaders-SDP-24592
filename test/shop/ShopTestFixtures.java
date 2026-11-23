@@ -2,7 +2,7 @@ package shop;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.ShopCatalog.Category;
+import shop.ShopProduct.Category;
 import engine.FileManager;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -52,7 +52,7 @@ public final class ShopTestFixtures {
 
     public static ShopController controller(PlayerAssets assets, SaveFile save,
             List<ShopProduct> products) {
-        return new ShopController(assets, save.files, products, save);
+        return new ShopController(assets, products, save);
     }
 
     public static ShopController upgradeController(PlayerAssets assets, SaveFile save) {
@@ -61,7 +61,7 @@ public final class ShopTestFixtures {
 
     /** Only for the startup test's isolated JVM. */
     public static ShopController controllerUsingDefaultSave(PlayerAssets assets, FileManager files) {
-        return new ShopController(assets, files, products());
+        return new ShopController(assets, products(), files::savePlayerAssets);
     }
 
     /** Keeps test and preview writes away from the default save. */

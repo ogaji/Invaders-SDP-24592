@@ -2,7 +2,7 @@ package shop;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.ShopCatalog.Category;
+import shop.ShopProduct.Category;
 import engine.Core;
 import entity.ShipType;
 import java.nio.file.Files;
@@ -40,8 +40,8 @@ class AvailableShipsTest {
             assertTrue(product.isAvailableByDefault());
             assertTrue(shop.isShipAvailable(product.getShipType()));
             assertEquals(0, product.getPrice());
-            assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase(product.getId()));
-            assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase(product.getId()));
+            assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase(product.getId()));
+            assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase(product.getId()));
         }
         assertEquals(0, assets.getBalance());
         assertTrue(assets.snapshot().getUnlockedContentIds().isEmpty());
@@ -66,7 +66,7 @@ class AvailableShipsTest {
         ShopController reopened = ShopTestFixtures.upgradeController(restored, save);
         assertTrue(reopened.isShipAvailable(ShipType.SPEEDSTER));
         byte[] before = Files.readAllBytes(save.getPath());
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, reopened.purchase("ship.speedster"));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, reopened.purchase("ship.speedster"));
         assertEquals(0, reopened.getBalance());
         assertArrayEquals(before, Files.readAllBytes(save.getPath()));
     }
@@ -128,7 +128,7 @@ class AvailableShipsTest {
 
         assertTrue(shop.isShipAvailable(ShipType.TANK));
         assertFalse(shop.isShipAvailable(ShipType.SPEEDSTER));
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase("ship.tank"));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase("ship.tank"));
         assertEquals(500, assets.getBalance());
         assertFalse(Files.exists(save.getPath()));
         assertEquals(PurchaseResult.SUCCESS, shop.purchase("ship.speedster"));
@@ -137,7 +137,7 @@ class AvailableShipsTest {
         assertTrue(save.load().getUnlockedContentIds().containsAll(
                 Arrays.asList("ship.tank", "ship.speedster")));
         byte[] written = Files.readAllBytes(save.getPath());
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase("ship.speedster"));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase("ship.speedster"));
         assertArrayEquals(written, Files.readAllBytes(save.getPath()));
     }
 

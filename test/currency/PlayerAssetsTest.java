@@ -8,6 +8,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PlayerAssetsTest {
     @Test
+    void failedUnlockRestoresTheDeductedPrice() {
+        PlayerAssets rejecting = new PlayerAssets() {
+            @Override boolean unlock(String id) { return false; }
+        };
+        rejecting.addCurrency(1000);
+        assertEquals(PlayerAssets.UnlockResult.UNLOCK_REJECTED, rejecting.unlockWithCurrency("upgrade", 100));
+        assertEquals(1000, rejecting.getBalance());
+        assertFalse(rejecting.isUnlocked("upgrade"));
+    }
+
+    @Test
     void startsWithEmptyAssets() {
         PlayerAssets assets = new PlayerAssets();
         assertEquals(0, assets.getBalance());

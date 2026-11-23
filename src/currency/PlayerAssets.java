@@ -5,6 +5,8 @@ import java.util.Map;
 
 /** Shared balance and permanent ownership for purchases, rewards and saving. */
 public class PlayerAssets {
+    public enum UnlockResult { UNLOCKED, INSUFFICIENT_CURRENCY, UNLOCK_REJECTED }
+
     private CurrencyBalance currencyBalance = new CurrencyBalance();
     private UnlockManager unlockManager = new UnlockManager();
     // Preserve old save fields without exposing an inventory purchase or use path.
@@ -22,16 +24,28 @@ public class PlayerAssets {
         return unlockManager.isUnlocked(contentId);
     }
 
-    public boolean addCurrency(int amount) {
+    boolean addCurrency(int amount) {
         return currencyBalance.add(amount);
     }
 
-    public boolean deductCurrency(int amount) {
+    boolean deductCurrency(int amount) {
         return currencyBalance.deduct(amount);
     }
 
-    public boolean unlock(String contentId) {
+    boolean unlock(String contentId) {
         return unlockManager.unlock(contentId);
+    }
+
+    /** Deducts currency for an unlock and refunds it if ownership cannot be granted. */
+    public UnlockResult unlockWithCurrency(String contentId, int amount) {
+        if (!deductCurrency(amount)) {
+            return UnlockResult.INSUFFICIENT_CURRENCY;
+        }
+        if (!unlock(contentId)) {
+            addCurrency(amount);
+            return UnlockResult.UNLOCK_REJECTED;
+        }
+        return UnlockResult.UNLOCKED;
     }
 
     public PlayerAssetsState snapshot() {

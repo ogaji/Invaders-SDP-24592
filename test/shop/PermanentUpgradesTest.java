@@ -39,7 +39,7 @@ class PermanentUpgradesTest {
                 assertEquals(expectedBalance, assets.getBalance());
                 assertEquals(level, upgrade.getLevel(save.load()));
                 byte[] written = Files.readAllBytes(save.getPath());
-                assertEquals(PurchaseResult.ALREADY_UNLOCKED,
+                assertEquals(PurchaseResult.ALREADY_AVAILABLE,
                         shop.purchase(upgrade.getProductId(level)));
                 assertArrayEquals(written, Files.readAllBytes(save.getPath()));
             }
@@ -60,7 +60,7 @@ class PermanentUpgradesTest {
 
     @Test
     void skippedTierAndInsufficientFundsLeaveProgressAndSaveUntouched() {
-        assertEquals(PurchaseResult.ITEM_NOT_AVAILABLE,
+        assertEquals(PurchaseResult.PREREQUISITE_NOT_MET,
                 shop.purchase(PermanentUpgrade.HULL.getProductId(2)));
         assertEquals(3000, assets.getBalance());
         assets.restore(new PlayerAssetsState(99, null, null));

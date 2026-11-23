@@ -1,11 +1,12 @@
 package shop;
 
 import currency.PlayerAssetsState;
-import currency.ShopCatalog.Category;
 import entity.ShipType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import shop.ShopProduct.Category;
 
 public final class ShopProducts {
     private ShopProducts() { }
@@ -28,7 +29,7 @@ public final class ShopProducts {
     }
 
     /** Keep one card per upgrade, advancing it only after a completed purchase. */
-    static List<ShopProduct> visibleProducts(List<ShopProduct> products, PlayerAssetsState assets) {
+    static List<ShopProduct> visibleProducts(Collection<ShopProduct> products, PlayerAssetsState assets) {
         List<ShopProduct> visible = new ArrayList<ShopProduct>();
         for (ShopProduct product : products) {
             PermanentUpgrade upgrade = PermanentUpgrade.forProduct(product.getId());

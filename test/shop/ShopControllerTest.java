@@ -3,7 +3,7 @@ package shop;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
 import currency.RewardSystem;
-import currency.ShopCatalog.Category;
+import shop.ShopProduct.Category;
 import engine.Core;
 import engine.FileManager;
 import java.nio.file.Files;
@@ -40,7 +40,8 @@ class ShopControllerTest {
         Files.write(save, new byte[] { 1, 2, 3 });
         byte[] before = Files.readAllBytes(save);
 
-        ShopController production = new ShopController(assets, files);
+        ShopController production = new ShopController(assets, ShopProducts.availableProducts(),
+                files::savePlayerAssets);
 
         assertEquals(1000, production.snapshot().getBalance());
         assertEquals(6, production.getProducts().size());
@@ -49,12 +50,12 @@ class ShopControllerTest {
     }
 
     @Test
-    void upgradeUsesCatalogPriceAndCannotBeBoughtAgain() throws Exception {
+    void upgradeUsesProductPriceAndCannotBeBoughtAgain() throws Exception {
         assertEquals(PurchaseResult.SUCCESS, shop.purchase(ShopTestFixtures.UPGRADE));
         assertEquals(900, saveFile.load().getBalance());
         byte[] saved = Files.readAllBytes(save);
 
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase(ShopTestFixtures.UPGRADE));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase(ShopTestFixtures.UPGRADE));
         assertEquals(900, assets.getBalance());
         assertTrue(assets.isUnlocked(ShopTestFixtures.UPGRADE));
         assertTrue(saveFile.load().getUnlockedContentIds().contains(ShopTestFixtures.UPGRADE));
@@ -67,7 +68,7 @@ class ShopControllerTest {
         assertEquals(PurchaseResult.SUCCESS, shop.purchase(ShopTestFixtures.UNLOCK));
         byte[] saved = Files.readAllBytes(save);
 
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, shop.purchase(ShopTestFixtures.UNLOCK));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase(ShopTestFixtures.UNLOCK));
         assertEquals(500, assets.getBalance());
         assertTrue(assets.isUnlocked(ShopTestFixtures.UNLOCK));
         assertArrayEquals(saved, Files.readAllBytes(save));
@@ -80,9 +81,9 @@ class ShopControllerTest {
 
         assertEquals(PurchaseResult.INSUFFICIENT_FUNDS, poorShop.purchase(ShopTestFixtures.UPGRADE));
         assertEquals(PurchaseResult.INSUFFICIENT_FUNDS, poorShop.purchase(ShopTestFixtures.UNLOCK));
-        assertEquals(PurchaseResult.INVALID_ITEM_ID, shop.purchase(null));
-        assertEquals(PurchaseResult.INVALID_ITEM_ID, shop.purchase(" "));
-        assertEquals(PurchaseResult.CATEGORY_MISMATCH, shop.purchase("UNKNOWN"));
+        assertEquals(PurchaseResult.INVALID_PRODUCT_ID, shop.purchase(null));
+        assertEquals(PurchaseResult.INVALID_PRODUCT_ID, shop.purchase(" "));
+        assertEquals(PurchaseResult.UNKNOWN_PRODUCT, shop.purchase("UNKNOWN"));
         assertEquals(1000, assets.getBalance());
         assertEquals(0, empty.getBalance());
         assertFalse(assets.isUnlocked(ShopTestFixtures.UPGRADE));
@@ -94,7 +95,7 @@ class ShopControllerTest {
     void legacyItemDataIsPreservedButCannotBePurchased() throws Exception {
         assets.restore(new PlayerAssetsState(1000, Collections.<String>emptySet(),
                 Collections.singletonMap("legacy.item", Integer.MAX_VALUE)));
-        assertEquals(PurchaseResult.CATEGORY_MISMATCH, shop.purchase("legacy.item"));
+        assertEquals(PurchaseResult.UNKNOWN_PRODUCT, shop.purchase("legacy.item"));
         assertFalse(Files.exists(save));
 
         assertEquals(PurchaseResult.SUCCESS, shop.purchase(ShopTestFixtures.UPGRADE));
@@ -114,7 +115,7 @@ class ShopControllerTest {
         assertEquals(400, restarted.snapshot().getBalance());
         assertTrue(restored.isUnlocked(ShopTestFixtures.UNLOCK));
         assertTrue(restored.isUnlocked(ShopTestFixtures.UPGRADE));
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, restarted.purchase(ShopTestFixtures.UPGRADE));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, restarted.purchase(ShopTestFixtures.UPGRADE));
         assertEquals(400, restored.getBalance());
     }
 
@@ -131,7 +132,7 @@ class ShopControllerTest {
         assertTrue(assets.isUnlocked(ShopTestFixtures.UPGRADE));
         assertEquals(ShopController.SaveStatus.FAILED, shop.getSaveStatus());
         assertFalse(shop.retrySave());
-        assertEquals(PurchaseResult.CATEGORY_MISMATCH, shop.purchase("UNKNOWN"));
+        assertEquals(PurchaseResult.UNKNOWN_PRODUCT, shop.purchase("UNKNOWN"));
         assertEquals(ShopController.SaveStatus.FAILED, shop.getSaveStatus());
         assertArrayEquals(previousSave, Files.readAllBytes(save));
 
@@ -173,7 +174,7 @@ class ShopControllerTest {
     @Test
     void productListAndSnapshotsAreReadOnlyCopies() {
         List<ShopProduct> input = new ArrayList<ShopProduct>(ShopTestFixtures.products());
-        ShopController configured = new ShopController(assets, files, input, saveFile);
+        ShopController configured = new ShopController(assets, input, saveFile);
         input.clear();
 
         assertEquals(2, configured.getProducts().size());
@@ -189,21 +190,26 @@ class ShopControllerTest {
 
     @Test
     void invalidDependenciesAndProductDefinitionsAreRejected() {
-        assertThrows(IllegalArgumentException.class, () -> new ShopController(null, files));
-        assertThrows(IllegalArgumentException.class, () -> new ShopController(assets, null));
-        assertThrows(IllegalArgumentException.class, () -> new ShopController(assets, files, null));
         assertThrows(IllegalArgumentException.class,
-                () -> new ShopController(assets, files, Collections.singletonList(null)));
+                () -> new ShopController(null, ShopTestFixtures.products(), saveFile));
+        assertThrows(IllegalArgumentException.class, () -> new ShopController(assets, null, saveFile));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ShopController(assets, ShopTestFixtures.products(), null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ShopController(assets, Collections.singletonList(null), saveFile));
+        assertThrows(IllegalArgumentException.class, () -> new ShopProduct(null, "X", Category.UPGRADE, 100));
         assertThrows(IllegalArgumentException.class, () -> new ShopProduct(" ", "X", Category.UPGRADE, 1));
         assertThrows(IllegalArgumentException.class, () -> new ShopProduct("x", "", Category.UPGRADE, 1));
         assertThrows(IllegalArgumentException.class, () -> new ShopProduct("x", "X", null, 1));
         assertThrows(IllegalArgumentException.class, () -> new ShopProduct("x", "X", Category.UPGRADE, 0));
+        assertThrows(IllegalArgumentException.class, () -> new ShopProduct("x", "X", Category.UNLOCKABLE, 0));
+        assertThrows(IllegalArgumentException.class, () -> new ShopProduct("x", "X", Category.UPGRADE, -50));
         assertThrows(IllegalArgumentException.class,
                 () -> new ShopProduct("x", "X", Category.UPGRADE, 1, " "));
         List<ShopProduct> duplicate = new ArrayList<ShopProduct>(ShopTestFixtures.products());
         duplicate.add(new ShopProduct(ShopTestFixtures.UPGRADE, "Duplicate", Category.UNLOCKABLE, 10));
 
-        assertThrows(IllegalArgumentException.class, () -> new ShopController(assets, files, duplicate));
+        assertThrows(IllegalArgumentException.class, () -> new ShopController(assets, duplicate, saveFile));
         assertFalse(Files.exists(save));
     }
 

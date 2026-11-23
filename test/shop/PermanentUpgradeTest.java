@@ -2,13 +2,14 @@ package shop;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.ShopCatalog;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import shop.ShopProduct.Category;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PermanentUpgradeTest {
@@ -29,27 +30,32 @@ class PermanentUpgradeTest {
 
     @Test
     void prerequisitesRejectSkippedTiersBeforeCharging() {
-        ShopCatalog catalog = new ShopCatalog();
-        assertFalse(catalog.registerUpgrade("tier2", 250, "tier1"));
-        assertTrue(catalog.registerUpgrade("tier1", 100));
-        assertTrue(catalog.registerUpgrade("tier2", 250, "tier1"));
-        assertTrue(catalog.registerUpgrade("tier3", 500, "tier2"));
-        assertFalse(catalog.registerUpgrade("tier1", 100, "tier3"));
-        assertFalse(catalog.registerUpgrade("loop", 100, "loop"));
-        assertFalse(catalog.registerUpgrade("bad", 10, "missing"));
-        PlayerAssets assets = new PlayerAssets();
-        assets.addCurrency(1000);
-        PurchaseSystem purchases = new PurchaseSystem(assets, catalog);
-        assertEquals(PurchaseResult.ITEM_NOT_AVAILABLE, purchases.purchaseUnlockable("tier2"));
-        assertEquals(PurchaseResult.ITEM_NOT_AVAILABLE, purchases.purchaseUnlockable("tier3"));
+        ShopProduct first = new ShopProduct("tier1", "Tier 1", Category.UPGRADE, 100);
+        ShopProduct second = new ShopProduct("tier2", "Tier 2", Category.UPGRADE, 250, "Tier 2", "tier1");
+        ShopProduct third = new ShopProduct("tier3", "Tier 3", Category.UPGRADE, 500, "Tier 3", "tier2");
+        ShopProduct cycle = new ShopProduct("tier1", "Tier 1", Category.UPGRADE, 100, "Tier 1", "tier3");
+        ShopProduct missing = new ShopProduct("bad", "Bad", Category.UPGRADE, 10, "Bad", "missing");
+        PlayerAssets assets = ShopTestFixtures.fundedAssets();
+        ShopController.AssetSaver ignoreSave = state -> { };
+        assertThrows(IllegalArgumentException.class,
+                () -> new ShopController(assets, List.of(second, first), ignoreSave));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ShopController(assets, List.of(cycle, second, third), ignoreSave));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ShopProduct("loop", "Loop", Category.UPGRADE, 100, "Loop", "loop"));
+        assertThrows(IllegalArgumentException.class,
+                () -> new ShopController(assets, List.of(missing), ignoreSave));
+        ShopController shop = new ShopController(assets, List.of(first, second, third), ignoreSave);
+        assertEquals(PurchaseResult.PREREQUISITE_NOT_MET, shop.purchase("tier2"));
+        assertEquals(PurchaseResult.PREREQUISITE_NOT_MET, shop.purchase("tier3"));
         assertEquals(1000, assets.getBalance());
         // A damaged/imported save containing tier2 must not bypass tier1 either.
-        assets.unlock("tier2");
-        assertEquals(PurchaseResult.ITEM_NOT_AVAILABLE, purchases.purchaseUnlockable("tier3"));
-        assertEquals(PurchaseResult.SUCCESS, purchases.purchaseUnlockable("tier1"));
-        assertEquals(PurchaseResult.SUCCESS, purchases.purchaseUnlockable("tier3"));
+        assertTrue(assets.restore(new PlayerAssetsState(1000, Collections.singleton("tier2"), null)));
+        assertEquals(PurchaseResult.PREREQUISITE_NOT_MET, shop.purchase("tier3"));
+        assertEquals(PurchaseResult.SUCCESS, shop.purchase("tier1"));
+        assertEquals(PurchaseResult.SUCCESS, shop.purchase("tier3"));
         assertEquals(400, assets.getBalance());
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, purchases.purchaseUnlockable("tier3"));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, shop.purchase("tier3"));
         assertEquals(400, assets.getBalance());
     }
 }

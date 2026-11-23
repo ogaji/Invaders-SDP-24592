@@ -122,7 +122,7 @@ class ShopScreenTest {
         assertEquals(500, assets.getBalance());
         byte[] saved = Files.readAllBytes(saveFile.getPath());
         tap(KeyEvent.VK_SPACE);
-        assertEquals(PurchaseResult.ALREADY_UNLOCKED, state("lastResult"));
+        assertEquals(PurchaseResult.ALREADY_AVAILABLE, state("lastResult"));
         assertEquals(500, ((PlayerAssetsState) state("assets")).getBalance());
         assertArrayEquals(saved, Files.readAllBytes(saveFile.getPath()));
     }
@@ -334,7 +334,7 @@ class ShopScreenTest {
     @Test
     void lowerSectionAcceptsGenericPermanentContentWithoutShipSpecificRules() throws Exception {
         shop.ShopProduct bgm = new shop.ShopProduct("TEST_BGM", "BGM sample",
-                currency.ShopCatalog.Category.UNLOCKABLE, 250, "Sample permanent unlock.");
+                shop.ShopProduct.Category.UNLOCKABLE, 250, "Sample permanent unlock.");
         controller = ShopTestFixtures.controller(assets, saveFile, java.util.Arrays.asList(
                 ShopTestFixtures.products().get(0), bgm));
         screen = new ShopScreen(448, 520, 60, controller);

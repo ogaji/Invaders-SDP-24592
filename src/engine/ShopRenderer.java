@@ -6,13 +6,13 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.List;
 
-import shop.PermanentUpgrade;
 import currency.PlayerAssetsState;
-import currency.ShopCatalog.Category;
 import entity.ShipType;
 import screen.Screen;
+import shop.PermanentUpgrade;
 import shop.ShopController.SaveStatus;
 import shop.ShopProduct;
+import shop.ShopProduct.Category;
 import vfx.Icon;
 import vfx.ShipSprites;
 

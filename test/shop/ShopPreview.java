@@ -5,7 +5,7 @@ import screen.Destination;
 import audio.AudioManager;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.ShopCatalog.Category;
+import shop.ShopProduct.Category;
 import engine.Core;
 import engine.DrawManager;
 import engine.FileManager;
