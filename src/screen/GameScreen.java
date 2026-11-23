@@ -1695,8 +1695,10 @@ public class GameScreen extends Screen {
      */
     private void tryDropAnnihilator(final EnemyShip enemyShip) {
         if (!this.annihilatorDroppedThisLevel
-                && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
-                && Math.random() < ANNIHILATOR_DROP_CHANCE) {
+            && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
+            && Math.random() < ANNIHILATOR_DROP_CHANCE) {
+            this.itemManager.spawnItem(new AnnihilatorItem(
+                enemyShip.getPositionX(), enemyShip.getPositionY()));
             this.annihilatorDroppedThisLevel = true;
             this.logger.info("Orbital Annihilator dropped from enemy ship.");
         }
