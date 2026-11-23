@@ -1,34 +1,26 @@
 package entity.item;
 
 import engine.DrawManager.SpriteType;
-import entity.OrbitalAnnihilator;
-import entity.Ship;
 
-/**
- * Item dropped by a destroyed enemy. When the ship catches it, the Orbital
- * Annihilator becomes available for one use.
- */
 public class AnnihilatorItem extends Item {
 
     private static final int ITEM_WIDTH = 14;
     private static final int ITEM_HEIGHT = 28;
 
-    private final OrbitalAnnihilator annihilator;
-
-    public AnnihilatorItem(final int positionX, final int positionY,
-                           final OrbitalAnnihilator annihilator) {
+    public AnnihilatorItem(final int positionX, final int positionY) {
         super(positionX, positionY, ITEM_WIDTH, ITEM_HEIGHT,
-                SpriteType.Explosion);
-        this.annihilator = annihilator;
+            SpriteType.Explosion);
     }
 
     @Override
-    public void applyEffect(final Ship ship) {
-        this.annihilator.arm();
+    public void applyEffect(final ItemEffectContext context) {
+        if (context != null && context.getAnnihilator() != null) {
+            context.getAnnihilator().arm();
+        }
     }
 
     @Override
-    public void removeEffect(final Ship ship) {
+    public void removeEffect(final ItemEffectContext context) {
     }
 
     @Override

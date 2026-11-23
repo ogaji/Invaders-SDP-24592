@@ -1,7 +1,6 @@
 
 package entity.item;
 
-import entity.Ship;
 import engine.DrawManager.SpriteType;
 import audio.AudioManager;
 /**
@@ -21,21 +20,15 @@ public class Hyperfire extends Item {
 
     }
 
-    /**
-     * Activates the Hyperfire effect on the player ship.
-     */
     @Override
-    public void applyEffect(final Ship ship) {
-        ship.setHyperfireEnabled(true);
+    public void applyEffect(final ItemEffectContext context) {
+        context.getShip().setHyperfireEnabled(true);
         AudioManager.playSFX("audio/sfx/item_hyperfire_activate.wav");
     }
 
-    /**
-     * Removes the Hyperfire effect from the player ship.
-     */
     @Override
-    public void removeEffect(final Ship ship) {
-        ship.setHyperfireEnabled(false);
+    public void removeEffect(final ItemEffectContext context) {
+        context.getShip().setHyperfireEnabled(false);
     }
 
     /**

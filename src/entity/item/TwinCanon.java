@@ -1,7 +1,6 @@
 package entity.item;
 
 import engine.DrawManager.SpriteType;
-import entity.Ship;
 
 /**
  * Twin Cannon item (double barrel).
@@ -52,13 +51,18 @@ public class TwinCanon extends Item {
     }
 
     @Override
-    public void applyEffect(final Ship ship) {
-        ship.setTwinCannonActive(true);
+    public PickupMode getPickupMode() {
+        return PickupMode.SHOT;
     }
 
     @Override
-    public void removeEffect(final Ship ship) {
-        ship.setTwinCannonActive(false);
+    public void applyEffect(final ItemEffectContext context) {
+        context.getShip().setTwinCannonActive(true);
+    }
+
+    @Override
+    public void removeEffect(final ItemEffectContext context) {
+        context.getShip().setTwinCannonActive(false);
     }
 
     @Override

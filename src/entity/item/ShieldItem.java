@@ -22,7 +22,13 @@ public class ShieldItem extends Item {
     }
 
     @Override
-    public void applyEffect(final Ship ship) {
+    public String getExpirySoundPath() {
+        return "audio/sfx/status_shield_off.wav";
+    }
+
+    @Override
+    public void applyEffect(final ItemEffectContext context) {
+        Ship ship = context == null ? null : context.getShip();
         // Ship.setShieldActive also refuses, but checking here keeps the
         // log line below from claiming a shield that never came up.
         if (ship != null && ship.getShipType().isShieldCapable()) {
@@ -33,7 +39,8 @@ public class ShieldItem extends Item {
     }
 
     @Override
-    public void removeEffect(final Ship ship) {
+    public void removeEffect(final ItemEffectContext context) {
+        Ship ship = context == null ? null : context.getShip();
         if (ship != null) {
             ship.setShieldActive(false);
             Core.getLogger().info("Energy Shield expired.");

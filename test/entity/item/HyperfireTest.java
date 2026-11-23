@@ -11,14 +11,15 @@ class HyperfireTest {
     @Test
     void activatesAndRemovesHyperfire() {
         Ship ship = new Ship(100, 100);
+        ItemEffectContext context = new ItemEffectContext(ship);
         Hyperfire hyperfire = new Hyperfire(100, 100);
 
         assertFalse(ship.isHyperfireEnabled(), "Hyperfire should start disabled");
 
-        hyperfire.applyEffect(ship);
+        hyperfire.applyEffect(context);
         assertTrue(ship.isHyperfireEnabled(), "Applying Hyperfire should enable it");
 
-        hyperfire.removeEffect(ship);
+        hyperfire.removeEffect(context);
         assertFalse(ship.isHyperfireEnabled(), "Removing Hyperfire should disable it");
     }
 }
