@@ -22,15 +22,15 @@ public class PlayerAssets {
         return unlockManager.isUnlocked(contentId);
     }
 
-    boolean addCurrency(int amount) {
+    public boolean addCurrency(int amount) {
         return currencyBalance.add(amount);
     }
 
-    boolean deductCurrency(int amount) {
+    public boolean deductCurrency(int amount) {
         return currencyBalance.deduct(amount);
     }
 
-    boolean unlock(String contentId) {
+    public boolean unlock(String contentId) {
         return unlockManager.unlock(contentId);
     }
 

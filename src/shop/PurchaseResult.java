@@ -1,4 +1,4 @@
-package currency;
+package shop;
 
 /**
  * Represents the possible outcomes of an item purchase operation.

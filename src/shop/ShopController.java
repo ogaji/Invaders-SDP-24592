@@ -2,8 +2,6 @@ package shop;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
-import currency.PurchaseSystem;
 import currency.ShopCatalog;
 import currency.ShopCatalog.Category;
 import engine.Core;

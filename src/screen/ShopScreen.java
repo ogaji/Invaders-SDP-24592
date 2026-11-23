@@ -2,7 +2,7 @@ package screen;
 
 import audio.AudioManager;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
+import shop.PurchaseResult;
 import currency.ShopCatalog.Category;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;

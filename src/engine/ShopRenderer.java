@@ -6,7 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.List;
 
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssetsState;
 import currency.ShopCatalog.Category;
 import entity.ShipType;

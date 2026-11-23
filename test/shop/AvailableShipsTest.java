@@ -1,9 +1,7 @@
 package shop;
 
-import currency.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
 import currency.ShopCatalog.Category;
 import engine.Core;
 import entity.ShipType;

@@ -1,4 +1,7 @@
-package currency;
+package shop;
+
+import currency.PlayerAssets;
+import currency.ShopCatalog;
 
 /**
  * Manages purchases of permanent stat upgrades and unlocks.

@@ -1,7 +1,7 @@
 package screen;
 
 import audio.AudioManager;
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssets;
 import engine.Core;
 import java.awt.Canvas;

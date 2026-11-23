@@ -2,8 +2,8 @@ package engine;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
-import currency.PurchaseSystem;
+import shop.PurchaseResult;
+import shop.PurchaseSystem;
 import currency.RewardSystem;
 import currency.ShopCatalog;
 import org.junit.jupiter.api.BeforeEach;

@@ -3,7 +3,7 @@ package screen;
 import audio.AudioManager;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
+import shop.PurchaseResult;
 import engine.Core;
 import entity.ShipType;
 import java.awt.Canvas;

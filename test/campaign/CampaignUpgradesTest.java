@@ -1,6 +1,6 @@
 package campaign;
 
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
 import entity.PlayerStatus;

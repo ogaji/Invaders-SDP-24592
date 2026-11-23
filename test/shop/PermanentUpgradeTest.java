@@ -1,5 +1,8 @@
-package currency;
+package shop;
 
+import currency.PlayerAssets;
+import currency.PlayerAssetsState;
+import currency.ShopCatalog;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;

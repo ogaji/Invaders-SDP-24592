@@ -1,9 +1,9 @@
 package engine;
 
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
+import shop.PurchaseResult;
 import event.EnemyDefeatedEvent;
 import event.GameplayEventPublisher;
 import event.LevelCompletedEvent;

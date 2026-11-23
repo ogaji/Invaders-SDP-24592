@@ -3,7 +3,6 @@ package shop;
 import screen.Destination;
 
 import audio.AudioManager;
-import currency.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
 import currency.ShopCatalog.Category;

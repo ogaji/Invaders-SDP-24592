@@ -1,5 +1,7 @@
-package currency;
+package shop;
 
+import currency.PlayerAssets;
+import currency.ShopCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,7 +65,7 @@ class PurchaseSystemTest {
     @Test
     void failedUnlockRestoresTheDeductedPrice() {
         PlayerAssets rejecting = new PlayerAssets() {
-            @Override boolean unlock(String id) { return false; }
+            @Override public boolean unlock(String id) { return false; }
         };
         rejecting.addCurrency(1000);
         PurchaseSystem purchases = new PurchaseSystem(rejecting, catalog);

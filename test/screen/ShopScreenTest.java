@@ -1,10 +1,10 @@
 package screen;
 
 import audio.AudioManager;
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
+import shop.PurchaseResult;
 import engine.Core;
 import engine.FileManager;
 import java.awt.Canvas;

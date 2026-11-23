@@ -1,9 +1,7 @@
 package shop;
 
-import currency.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
 import engine.Core;
 import java.nio.file.Files;
 import java.nio.file.Path;
