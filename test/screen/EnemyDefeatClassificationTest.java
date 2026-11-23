@@ -279,7 +279,7 @@ class EnemyDefeatClassificationTest {
     @Test
     void laterWavesAndRunsStayDistinguishable() throws Exception {
         GameSettings single = new GameSettings(1, 1, 1, 100000);
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 Arrays.asList(single, single), false, 448, 520, 60,
                 new RunSession("two-waves"));
         game.initialize();
@@ -312,7 +312,7 @@ class EnemyDefeatClassificationTest {
 
     @Test
     void theLastDefeatArrivesBeforeTheCompletionEvent() throws Exception {
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 new GameSettings(1, 1, 1, 100000), false, 448, 520, 60,
                 new RunSession("completion-order"));
         game.initialize();
@@ -427,7 +427,7 @@ class EnemyDefeatClassificationTest {
 
     /** Starts one recorded campaign stage with a three-by-five formation. */
     private static GameScreen campaign(final int stage, final String runId) {
-        GameScreen game = new GameScreen(new GameState(stage, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(stage, 0, 3, 0, 0),
                 new GameSettings(3, 5, 1, 100000), false, 448, 520, 60,
                 new RunSession(runId));
         game.initialize();

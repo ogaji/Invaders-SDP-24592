@@ -2,7 +2,6 @@ package screen;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -218,182 +217,19 @@ public class GameScreen extends Screen {
     private boolean isLowHealthBGM = false;
 
     /**
-     * Constructor, establishes the properties of the screen.
+     * Creates a stage with one or more waves.
      *
-     * @param gameState
-     *            Current game state.
-     * @param gameSettings
-     *            Current game settings.
-     * @param bonusLife
-     *            Checks if a bonus life is awarded this level.
-     * @param width
-     *            Screen width.
-     * @param height
-     *            Screen height.
-     * @param fps
-     *            Frames per second, frame rate at which the game is run.
+     * @param gameState current game state
+     * @param waves settings for each wave in play order
+     * @param bonusLife whether to award a bonus life
+     * @param width screen width
+     * @param height screen height
+     * @param fps screen frame rate
+     * @param shipType selected player ship type
+     * @param runSession session used to record the run, or null to skip recording
+     * @param campaignUpgrades permanent upgrades to apply, or {@link CampaignUpgrades#none()}
+     *                         to use base ship stats
      */
-    public GameScreen(final GameState gameState,
-                      final GameSettings gameSettings, final boolean bonusLife,
-                      final int width, final int height, final int fps) {
-        this(gameState, Collections.singletonList(gameSettings), bonusLife,
-                width, height, fps, ShipType.STANDARD);
-    }
-
-    /**
-     * Constructor for a stage played with a selected player ship.
-     *
-     * @param gameState
-     *            Current game state.
-     * @param gameSettings
-     *            Current game settings.
-     * @param bonusLife
-     *            Checks if a bonus life is awarded this level.
-     * @param width
-     *            Screen width.
-     * @param height
-     *            Screen height.
-     * @param fps
-     *            Frames per second, frame rate at which the game is run.
-     * @param shipType
-     *            Selected player ship type.
-     */
-    public GameScreen(final GameState gameState,
-                      final GameSettings gameSettings, final boolean bonusLife,
-                      final int width, final int height, final int fps,
-                      final ShipType shipType) {
-        this(gameState, Collections.singletonList(gameSettings), bonusLife,
-                width, height, fps, shipType);
-    }
-
-    /**
-     * Constructor for a stage with one or more waves.
-     *
-     * @param gameState
-     * 			Current game state.
-     * @param waves
-     * 			Settings of each wave, in play order.
-     * @param bonusLife
-     * 			Checks if a bonus life is awarded this level.
-     * @param width
-     * 			Screen width.
-     * @param height
-     * 			Screen height.
-     * @param fps
-     * 			Frames per second, frame rate at which the game is run.
-     */
-    public GameScreen(final GameState gameState,
-                      final List<GameSettings> waves, final boolean bonusLife,
-                      final int width, final int height, final int fps) {
-        this(gameState, waves, bonusLife, width, height, fps,
-                ShipType.STANDARD, null);
-    }
-
-    /**
-     * Constructor for a stage with one or more waves, played with a selected
-     * player ship.
-     *
-     * @param gameState
-     * 			Current game state.
-     * @param waves
-     * 			Settings of each wave, in play order.
-     * @param bonusLife
-     * 			Checks if a bonus life is awarded this level.
-     * @param width
-     * 			Screen width.
-     * @param height
-     * 			Screen height.
-     * @param fps
-     * 			Frames per second, frame rate at which the game is run.
-     * @param shipType
-     * 			Selected player ship type.
-     */
-    public GameScreen(final GameState gameState,
-                      final List<GameSettings> waves, final boolean bonusLife,
-                      final int width, final int height, final int fps,
-                      final ShipType shipType) {
-        this(gameState, waves, bonusLife, width, height, fps, shipType, null);
-    }
-
-    /**
-     * Constructor for a single-wave stage that records its run.
-     *
-     * @param runSession
-     * 			Session the run is recorded under, or null for no records.
-     */
-    public GameScreen(final GameState gameState,
-                      final GameSettings gameSettings, final boolean bonusLife,
-                      final int width, final int height, final int fps,
-                      final RunSession runSession) {
-        this(gameState, Collections.singletonList(gameSettings), bonusLife,
-                width, height, fps, ShipType.STANDARD, runSession);
-    }
-
-    /**
-     * Constructor for a multi-wave stage that records its run.
-     *
-     * @param runSession
-     * 			Session the run is recorded under, or null for no records.
-     */
-    public GameScreen(final GameState gameState,
-                      final List<GameSettings> waves, final boolean bonusLife,
-                      final int width, final int height, final int fps,
-                      final RunSession runSession) {
-        this(gameState, waves, bonusLife, width, height, fps,
-                ShipType.STANDARD, runSession);
-    }
-
-    /**
-     * Constructor for a single-wave stage played with a selected ship and
-     * recorded under a run session.
-     */
-    public GameScreen(final GameState gameState,
-                      final GameSettings gameSettings, final boolean bonusLife,
-                      final int width, final int height, final int fps,
-                      final ShipType shipType, final RunSession runSession) {
-        this(gameState, Collections.singletonList(gameSettings), bonusLife,
-                width, height, fps, shipType, runSession);
-    }
-
-    /**
-     * Constructor for a stage with one or more waves, played with a selected
-     * player ship and recorded under a run session. Every other constructor
-     * reaches this one.
-     *
-     * @param gameState
-     * 			Current game state.
-     * @param waves
-     * 			Settings of each wave, in play order.
-     * @param bonusLife
-     * 			Checks if a bonus life is awarded this level.
-     * @param width
-     * 			Screen width.
-     * @param height
-     * 			Screen height.
-     * @param fps
-     * 			Frames per second, frame rate at which the game is run.
-     * @param shipType
-     * 			Selected player ship type.
-     * @param runSession
-     * 			Session the run is recorded under, or null for no records.
-     */
-    public GameScreen(final GameState gameState,
-                      final List<GameSettings> waves, final boolean bonusLife,
-                      final int width, final int height, final int fps,
-                      final ShipType shipType, final RunSession runSession) {
-        this(gameState, waves, bonusLife, width, height, fps, shipType, runSession,
-                CampaignUpgrades.none());
-    }
-
-    public GameScreen(final GameState gameState, final GameSettings gameSettings,
-            final boolean bonusLife, final int width, final int height, final int fps,
-            final ShipType shipType, final RunSession runSession,
-            final CampaignUpgrades campaignUpgrades) {
-        this(gameState, Collections.singletonList(gameSettings), bonusLife,
-                width, height, fps, shipType, runSession, campaignUpgrades);
-    }
-
-    /** Campaign-only entry point; legacy and custom-level constructors keep base stats. */
     public GameScreen(final GameState gameState, final List<GameSettings> waves,
             final boolean bonusLife, final int width, final int height, final int fps,
             final ShipType shipType, final RunSession runSession,
@@ -437,13 +273,14 @@ public class GameScreen extends Screen {
         this.shipsDestroyed = gameState.getShipsDestroyed();
     }
 
-/** Validates every wave before allocating a screen or changing active gameplay. */
+    /** Validates every wave before allocating a screen or changing active gameplay. */
     public static GameScreen forCustomLevel(final GameState state,
             final LevelDefinition definition, final double difficultyMultiplier,
             final int width, final int height, final int fps) {
         List<GameSettings> settings = LevelGameplayAdapter.prepare(
                 definition, width, height, difficultyMultiplier);
-        GameScreen screen = new GameScreen(state, settings, false, width, height, fps);
+        GameScreen screen = new GameScreen(state, settings, false, width, height, fps,
+                ShipType.STANDARD, null, CampaignUpgrades.none());
         screen.customWaves = definition.getWaves();
         return screen;
     }

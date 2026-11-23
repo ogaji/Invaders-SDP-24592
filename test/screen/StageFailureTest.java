@@ -72,7 +72,7 @@ public final class StageFailureTest {
     }
 
     private static GameScreen newGame() {
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 new GameSettings(5, 4, 60, 2000), false, 448, 520, 60);
         game.initialize();
         return game;

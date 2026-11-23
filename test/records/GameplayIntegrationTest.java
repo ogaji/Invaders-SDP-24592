@@ -77,7 +77,7 @@ public final class GameplayIntegrationTest {
     @SuppressWarnings("unchecked")
     private static void campaign(RecordsService service, String path) throws Exception {
         service.startRun(path);
-        GameScreen game = new GameScreen(new GameState(7,0,3,0,0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(7,0,3,0,0),
                 new GameSettings(1,1,1000,10000),false,448,520,60,
                 // Heavy Tank: the shield-absorption check below needs a ship
                 // that can hold the Energy Shield.

@@ -1,6 +1,7 @@
 package engine;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Handler;
@@ -245,8 +246,8 @@ public final class Core {
                     && gameState.getLivesRemaining() < campaignUpgrades.getMaxLives(selectedShip);
 
             currentScreen = new GameScreen(gameState,
-                    applyDifficulty(CampaignStageData
-                            .getStageSettings(gameState.getLevel())),
+                    Collections.singletonList(applyDifficulty(CampaignStageData
+                            .getStageSettings(gameState.getLevel()))),
                     bonusLife, width, height, FPS, selectedShip,
                     runSession, campaignUpgrades);
             LOGGER.info("Starting " + WIDTH + "x" + HEIGHT

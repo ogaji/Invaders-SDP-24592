@@ -454,7 +454,7 @@ private static void testLatestMainDefeatAdapter() throws Exception {
     global.setAccessible(true); Object previous = global.get(null); global.set(null,service);
     try {
         service.startRun("adapter");
-        screen.GameScreen game = new screen.GameScreen(new engine.GameState(1,0,3,0,0),
+        screen.GameScreen game = screen.GameScreenFixtures.gameScreen(new engine.GameState(1,0,3,0,0),
                 new engine.GameSettings(2,2,40,1000),false,432,490,60,new RunSession("adapter"));
         java.lang.reflect.Method defeated = screen.GameScreen.class.getDeclaredMethod("recordEnemyDefeat",entity.EnemyShip.class);
         defeated.setAccessible(true);

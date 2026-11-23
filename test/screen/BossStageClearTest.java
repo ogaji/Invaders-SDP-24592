@@ -125,7 +125,7 @@ public final class BossStageClearTest {
      * @return Screen ready to be updated.
      */
     private static GameScreen newGame(final int level) throws Exception {
-        GameScreen game = new GameScreen(new GameState(level, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(level, 0, 3, 0, 0),
                 new GameSettings(1, 1, 60, 2000), false, 448, 520, 60);
         game.initialize();
         // Without this the screen is still counting down and skips its

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import engine.GameSettings;
 import engine.GameState;
 import screen.GameScreen;
+import screen.GameScreenFixtures;
 
 /**
  * Standalone checks that the formation's pace follows the stage setting and
@@ -156,7 +157,7 @@ public final class FormationMovementSpeedTest {
     private static EnemyShipFormation formation(final int baseSpeed)
             throws Exception {
 
-        GameScreen game = new GameScreen(
+        GameScreen game = GameScreenFixtures.gameScreen(
                 new GameState(1, 0, 3, 0, 0),
                 new GameSettings(5, 4, baseSpeed, 2000),
                 false, 448, 520, 60);
