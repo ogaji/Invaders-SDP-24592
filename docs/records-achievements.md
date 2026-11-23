@@ -1,6 +1,6 @@
 # Records & Achievements: Development and Verification
 
-The local implementation covers team requirements 3.1–3.7. Its initial integration baseline combined course main `f476f5b` (2026-10-15) with team main `2d5ce71`, preserving Campaign mode, multiple waves, items, Infinite Mode, Settings, BGM, and audio caching. The formal acceptance criteria remain defined in [`teams/Chinese_can_fly.md`](../teams/Chinese_can_fly.md).
+The local implementation covers team requirements 3.1–3.7. Its initial integration baseline combined course main `f476f5b` (2026-10-15) with team main `2d5ce71`, preserving Campaign mode, multiple waves, items, Infinite Mode, Settings, BGM, and audio caching. The formal acceptance criteria remain defined in [`teams/Chinese_can_fly.md`](../archive/docs/teams/Chinese_can_fly.md).
 
 ## Usage
 
@@ -28,8 +28,8 @@ The Records page can be opened from the title menu and returns to it, preserving
 Run the following commands from the game repository root:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\build.ps1
-powershell -NoProfile -ExecutionPolicy RemoteSigned -File .\scripts\test-records.ps1
+.\gradlew.bat classes
+.\gradlew.bat testRecords
 ```
 
 The records tests cover field validation, active-time accounting, duplicate completion handling, boundary conditions for all five achievements, ranking order and the ten-entry limit, recovery after restart, backup-recovery warnings, preservation of original files when recovery is unavailable, protection of the valid primary profile when backup writes fail, and event handling after a run has closed.
