@@ -51,7 +51,7 @@ Spotless currently handles trailing whitespace, final newlines, and LF line endi
 
 Test sources from `test/` and `tests/` are consolidated under `test/`, following their Java package directories. The build rejects Java files left under `tests/` so they cannot be silently skipped. JUnit 5 tests are discovered automatically. Standalone `main()` suites are listed in `smokeTestClasses` in `build.gradle`; register new standalone `*Test.java` suites there so `check` runs them. `test/shop/ShopPreview.java` is a manual tool outside the automated checks.
 
-To run one suite, use `test --tests "engine.FileManagerTest"` for JUnit or `smokeLevelModelTest` for a standalone test. Use `tasks` to list all available tasks. Existing PowerShell scripts in `scripts/` also delegate to the Wrapper. Use these Gradle tasks instead of manual `javac` commands in older team documents.
+To run one suite, use `test --tests "engine.FileManagerTest"` for JUnit or `smokeLevelModelTest` for a standalone test. Use `tasks` to list all available tasks. Use these Gradle tasks instead of manual `javac` commands in older team documents.
 
 ## CI and local files
 

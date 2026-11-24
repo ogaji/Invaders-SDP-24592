@@ -108,4 +108,4 @@ request from the teams named.
 ## Git Workflow
 The team's Git workflow — branch strategy, commit rules, pull request and review
 rules, merge strategy and the overall process diagram — is documented separately
-in [`docs/KimchiBaguette_Git_Workflow.md`](../docs/KimchiBaguette_Git_Workflow.md).
+in [`docs/KimchiBaguette_Git_Workflow.md`](../workflows/KimchiBaguette_Git_Workflow.md).

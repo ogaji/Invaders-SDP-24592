@@ -4,7 +4,7 @@
 
 **Course:** CSE2024 · Section 24592 · 2026 Semester 2
 
-**Git workflow:** [Team Git workflow](../docs/Git_Workflow.md)
+**Git workflow:** [Team Git workflow](../../../docs/Git_Workflow.md)
 
 ## 1. Team Introduction
 

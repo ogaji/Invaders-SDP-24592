@@ -6,7 +6,7 @@
 
 ## Current team and responsibilities
 
-This roster follows [`teams/Chinese_can_fly.md`](../teams/Chinese_can_fly.md). The responsibilities are the team's registered project areas, not permanent ownership of a requirement or automatic GitHub permissions.
+This roster follows [`teams/Chinese_can_fly.md`](../archive/docs/teams/Chinese_can_fly.md). The responsibilities are the team's registered project areas, not permanent ownership of a requirement or automatic GitHub permissions.
 
 | Member | GitHub | Registered project responsibility |
 | --- | --- | --- |

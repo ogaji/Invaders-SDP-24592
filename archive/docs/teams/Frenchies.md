@@ -6,7 +6,7 @@
 
 | No. | Name | Members | Requirements |
 |-----|------|---------|--------------|
-| 1 | [Frenchies](https://github.com/greg-hue/Invaders-SDP-24592.git) | [Grégoire NOGIER](https://github.com/greg-hue), [Eloi GAILLARD](https://github.com/eloi-kgg), [Samuel KUTCHUKIAN](https://github.com/SamZTU), [Alexis BIHOUR](https://github.com/Alex0xB), [Arthur NEVANT](https://github.com/Arthurnev), [Loane GOSSELIN](https://github.com/Loanegosselin), [Lyanh RENKIN](https://github.com/renlahh), [Evangeline VUCHOT](https://github.com/EvangelineVuchot), [Chiara BICHON](https://github.com/Lawsiel)| [Frenchies.md](teams/Frenchies.md) |
+| 1 | [Frenchies](https://github.com/greg-hue/Invaders-SDP-24592.git) | [Grégoire NOGIER](https://github.com/greg-hue), [Eloi GAILLARD](https://github.com/eloi-kgg), [Samuel KUTCHUKIAN](https://github.com/SamZTU), [Alexis BIHOUR](https://github.com/Alex0xB), [Arthur NEVANT](https://github.com/Arthurnev), [Loane GOSSELIN](https://github.com/Loanegosselin), [Lyanh RENKIN](https://github.com/renlahh), [Evangeline VUCHOT](https://github.com/EvangelineVuchot), [Chiara BICHON](https://github.com/Lawsiel)| [Frenchies.md](Frenchies.md) |
 
 ### Team Introduction
 
@@ -45,12 +45,12 @@ Integration details affecting campaign stages and enemy behavior will be coordin
 
 The Main Menu depends on the following modules:
 
-- **Sound & Visual Settings** → [Modules 1](/teams/chanyoung.md) & [Modules 2](/teams/the-diversity-hires.md)
+- **Sound & Visual Settings** → [Modules 1](chanyoung.md) & [Modules 2](the-diversity-hires.md)
   The Main Menu must provide access to the game's audio and video settings.
 
-- **Game Mode Selection** → [Module 10](/teams/friends.md)  
+- **Game Mode Selection** → [Module 10](friends.md)  
   The Main Menu must allow the player to select between single-player and two-player game modes.
 
-- **Shop & Hangar** → [Modules 4](/teams/HanCode.md), [Module 5](/teams/Best-French.md) & [Module 9](/teams/KimchiBaguette.md) 
+- **Shop & Hangar** → [Modules 4](HanCode.md), [Module 5](Best-French.md) & [Module 9](KimchiBaguette.md) 
   The Main Menu must provide access to the shop, currency, available items, and ship customization.
 
