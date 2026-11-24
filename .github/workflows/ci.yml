@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
@@ -25,13 +25,32 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v6
-      - name: Build and test (Windows)
+      - name: Check (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: .\gradlew.bat --no-daemon --console=plain clean build
-      - name: Build and test (Linux)
+        run: .\gradlew.bat --no-daemon --console=plain clean check
+      - name: Check (Linux/macOS)
         if: runner.os != 'Windows'
-        run: sh ./gradlew --no-daemon --console=plain clean build
+        run: sh ./gradlew --no-daemon --console=plain clean check
+      - name: Verify packaged launcher (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --console=plain distZip "-PreleaseVersion=0.0.0-ci"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Expand-Archive -LiteralPath build/distributions/space-invaders-0.0.0-ci.zip -DestinationPath build/package-smoke
+          & ./build/package-smoke/space-invaders-0.0.0-ci/Launch.bat --offline --check-only --data-dir "$PWD/build/package data"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify packaged launcher (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh ./gradlew --no-daemon --console=plain distZip "-PreleaseVersion=0.0.0-ci"
+          unzip -q build/distributions/space-invaders-0.0.0-ci.zip -d build/package-smoke
+          script=launch.sh
+          if [[ "$RUNNER_OS" == "macOS" ]]; then script=Launch.command; fi
+          sh "build/package-smoke/space-invaders-0.0.0-ci/$script" --offline --check-only --data-dir "$PWD/build/package data"
       - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v7
@@ -40,5 +59,38 @@ jobs:
           path: |
             build/reports/
             build/test-results/test/
+            launcher/build/reports/tests/
+            launcher/build/test-results/test/
           if-no-files-found: ignore
+          retention-days: 7
+
+  deliver:
+    name: Package main build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Build ZIP after checks
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="main-${GITHUB_SHA:0:12}"
+          sh ./gradlew --no-daemon --console=plain distZip "-PreleaseVersion=$version"
+          echo "archive=build/distributions/space-invaders-${version}.zip" >> "$GITHUB_OUTPUT"
+      - name: Upload playable build
+        uses: actions/upload-artifact@v7
+        with:
+          name: main-${{ github.sha }}
+          path: ${{ steps.package.outputs.archive }}
+          if-no-files-found: error
           retention-days: 7

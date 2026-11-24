@@ -1,0 +1,7 @@
+Gson 2.15.0
+Copyright (C) 2008 Google Inc.
+https://github.com/google/gson
+
+Distributed under the Apache License, Version 2.0.
+The complete license is in META-INF/licenses/gson-LICENSE.txt.
+Gson bytecode is included without modification.
