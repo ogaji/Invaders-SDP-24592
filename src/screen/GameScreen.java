@@ -11,8 +11,8 @@ import java.util.Random;
 import campaign.CampaignStageData;
 import campaign.DifficultyAdjustWhilePlaying;
 import entity.item.ChameleonHull;
+import item.ItemDropper;
 import item.ItemManager;
-import entity.item.ShieldItem;
 import engine.Cooldown;
 import campaign.CampaignUpgrades;
 import engine.Core;
@@ -59,14 +59,10 @@ import event.LevelCompletedEvent;
 import java.util.Map;
 import java.util.IdentityHashMap;
 import java.util.UUID;
-import entity.item.Hyperfire;
 import entity.OrbitalAnnihilator;
 import entity.Grenade;
 import entity.GrenadeFragment;
-import entity.item.AnnihilatorItem;
 import hud.BuffHud;
-import entity.item.ClusterGrenadeItem;
-import entity.item.TwinCanon;
 import entity.item.ItemEffectContext;
 import item.BuffManager;
 import item.ItemApplier;
@@ -117,14 +113,8 @@ public class GameScreen extends Screen {
             "audio/sfx/boss_explosion.wav";
     /** Stages where a boss appears (agreed with the team, may change). */
     static final int[] BOSS_LEVELS = { 3, 5, 7 };
-    /** Chance for a destroyed enemy ship to drop a Cluster Grenade item. */
-    private static final double GRENADE_DROP_CHANCE = 0.15;
     /** Fixed altitude (Y) where a grenade explodes if it hits nothing. */
     private static final int GRENADE_DETONATION_Y = 200;
-    /** Maximum number of Cluster Grenade items dropped in one level. */
-    private static final int MAX_GRENADE_DROPS_PER_LEVEL = 2;
-    /** Chance that a destroyed enemy drops the Orbital Annihilator. */
-    private static final double ANNIHILATOR_DROP_CHANCE = 0.05;
 
     /** Time the defeated boss stays on screen as an explosion. */
     private Cooldown bossExplosionCooldown;
@@ -135,18 +125,14 @@ public class GameScreen extends Screen {
     private Set<BossBullet> bossBullets;
 
     private ItemManager itemManager;
+    private ItemDropper itemDropper;
     private BuffManager buffManager;
     private ItemEffectContext itemEffectContext;
-    private final Random itemDropRandom = new Random();
     private final Random obstacleRandom = new Random();
     /** Active hazards; a set permits future expansion beyond one obstacle. */
     private Set<FallingObstacle> fallingObstacles;
     /** Time until the next falling hazard appears. */
     private Cooldown fallingObstacleCooldown;
-    private boolean chameleonDroppedThisLevel = false;
-    private boolean shieldDroppedThisLevel = false;
-    private boolean hyperfireDroppedThisLevel = false;
-    private boolean annihilatorDroppedThisLevel = false;
 
     /** Grenades launched by the player and not exploded yet. */
     private Set<Grenade> grenades;
@@ -154,12 +140,6 @@ public class GameScreen extends Screen {
     private Set<GrenadeFragment> fragments;
     /** Prevents launching several grenades while holding G. */
     private boolean grenadeKeyWasDown;
-    /** Number of Cluster Grenade items dropped in this level. */
-    private int grenadeDropsThisLevel = 0;
-    /** Ships destroyed when the level started, for the Twin Cannon spawn. */
-    private int shipsDestroyedAtStart;
-    /** Whether the Twin Cannon item already appeared in this level. */
-    private boolean twinCanonSpawned;
 
     /** Player ship type selected before the stage started. */
     private ShipType shipType;
@@ -480,18 +460,12 @@ public class GameScreen extends Screen {
         this.itemEffectContext = new ItemEffectContext(this.ship, this.annihilator);
         this.itemManager = new ItemManager(this.height,
             new ItemApplier(this.buffManager, this.itemEffectContext));
-
-        this.shieldDroppedThisLevel = false;
-        this.chameleonDroppedThisLevel = false;
-        this.hyperfireDroppedThisLevel = false;
-        this.annihilatorDroppedThisLevel = false;
+        this.itemDropper = new ItemDropper(this.itemManager, this.level,
+                this.shipsDestroyed);
 
         this.grenades = new HashSet<Grenade>();
         this.fragments = new HashSet<GrenadeFragment>();
         this.grenadeKeyWasDown = false;
-        this.grenadeDropsThisLevel = 0;
-        this.shipsDestroyedAtStart = this.shipsDestroyed;
-        this.twinCanonSpawned = false;
 
         this.bonusEnemyManager = new BonusEnemyManager();
         this.screenFinishedCooldown = Core.getCooldown(SCREEN_CHANGE_INTERVAL);
@@ -655,7 +629,8 @@ public class GameScreen extends Screen {
     }
 
     private void updateItems() {
-        trySpawnTwinCanonItem();
+        this.itemDropper.update(this.shipsDestroyed, this.width,
+                SEPARATION_LINE_HEIGHT);
         this.itemManager.update();
         this.buffManager.update(this.itemEffectContext);
 
@@ -1038,28 +1013,9 @@ public class GameScreen extends Screen {
                                         + enemyShip.getWidth() / 2,
                                 enemyShip.getPositionY()
                                         + enemyShip.getHeight() / 2);
-                        tryDropChameleonHull(enemyShip);
-                        tryDropAnnihilator(enemyShip);
-                        tryDropGrenade(enemyShip);
-
-                        // --- SHIELD ITEM DROP ---
-                        if (!this.shieldDroppedThisLevel
-                                && this.shipType.isShieldCapable()) {
-                            boolean shouldDrop = (Math.random() < 0.15)
-                                    || (this.enemyShipFormation.isEmpty());
-                            if (shouldDrop) {
-                                this.itemManager.spawnItem(
-                                        new ShieldItem(
-                                                enemyShip.getPositionX(),
-                                                enemyShip.getPositionY()
-                                        )
-                                );
-                                this.shieldDroppedThisLevel = true;
-                                this.logger.info("Shield item dropped from enemy ship at ("
-                                        + enemyShip.getPositionX() + ", "
-                                        + enemyShip.getPositionY() + ").");
-                            }
-                        }
+                        this.itemDropper.onEnemyDestroyedByBullet(enemyShip,
+                                this.playerStatus.isAlive(), this.shipType,
+                                this.enemyShipFormation.isEmpty());
                         break;
                     }
                 }
@@ -1074,8 +1030,8 @@ public class GameScreen extends Screen {
                     this.particleSystem.spawnEnemyExplosion(
                             bonusShip.getPositionX() + bonusShip.getWidth() / 2,
                             bonusShip.getPositionY() + bonusShip.getHeight() / 2);
-                    tryDropChameleonHull(bonusShip);
-                    tryDropHyperfire(bonusShip);
+                    this.itemDropper.onBonusEnemyDestroyed(bonusShip,
+                            this.playerStatus.isAlive());
                     recyclable.add(bullet);
                 }
 
@@ -1121,7 +1077,8 @@ public class GameScreen extends Screen {
 
                 this.enemyShipFormation.destroy(enemyShip);
                 enemyDestroyed = true;
-                tryDropChameleonHull(enemyShip);
+                this.itemDropper.onEnemyDestroyedByBeamOrContact(enemyShip,
+                        this.playerStatus.isAlive());
             }
         }
 
@@ -1136,8 +1093,8 @@ public class GameScreen extends Screen {
             floatingScoreHud.show(bonusShip);
             this.score += this.bonusEnemyManager.destroy();
             this.shipsDestroyed++;
-            tryDropChameleonHull(bonusShip);
-            tryDropHyperfire(bonusShip);
+            this.itemDropper.onBonusEnemyDestroyed(bonusShip,
+                    this.playerStatus.isAlive());
         }
 
         Set<Bullet> neutralized = new HashSet<Bullet>();
@@ -1560,22 +1517,6 @@ public class GameScreen extends Screen {
         return Math.max(leftBoundary, Math.min(positionX, rightBoundary));
     }
 
-    private void tryDropChameleonHull(final EnemyShip enemy) {
-        if (!this.chameleonDroppedThisLevel
-                && this.level >= ChameleonHull.REQUIRED_LEVEL
-                && this.playerStatus.isAlive()
-                && this.itemDropRandom.nextDouble() < ChameleonHull.DROP_CHANCE) {
-
-            this.itemManager.spawnItem(
-                    new ChameleonHull(
-                            enemy.getPositionX(),
-                            enemy.getPositionY()
-                    )
-            );
-            this.chameleonDroppedThisLevel = true;
-        }
-    }
-
     /** Vertical keys are enabled only during the star transformation. */
     private void updateBallMovement() {
         if (!this.ship.isChameleonHullActive() || this.ship.isDestroyed()) {
@@ -1626,7 +1567,8 @@ public class GameScreen extends Screen {
 
                 this.enemyShipFormation.destroy(enemy);
                 enemyDestroyed = true;
-                tryDropChameleonHull(enemy);
+                this.itemDropper.onEnemyDestroyedByBeamOrContact(enemy,
+                        this.playerStatus.isAlive());
             }
         }
         if (enemyDestroyed) {
@@ -1640,22 +1582,8 @@ public class GameScreen extends Screen {
             floatingScoreHud.show(bonusShip);
             this.score += this.bonusEnemyManager.destroy();
             this.shipsDestroyed++;
-            tryDropChameleonHull(bonusShip);
-            tryDropHyperfire(bonusShip);
-        }
-    }
-
-    /**
-     * Twin Cannon item: appears once in its level after enough kills.
-     */
-    private void trySpawnTwinCanonItem() {
-        if (!this.twinCanonSpawned && TwinCanon.isUnlocked(this.level)
-            && this.shipsDestroyed - this.shipsDestroyedAtStart
-            >= TwinCanon.SPAWN_KILLS) {
-            this.twinCanonSpawned = true;
-            this.itemManager.spawnItem(new TwinCanon(
-                30 + (int) (Math.random() * (this.width - 60)),
-                SEPARATION_LINE_HEIGHT));
+            this.itemDropper.onBonusEnemyDestroyed(bonusShip,
+                    this.playerStatus.isAlive());
         }
     }
 
@@ -1668,58 +1596,6 @@ public class GameScreen extends Screen {
         return ControlsConfig.getKey(ControlsConfig.LEFT) == KeyEvent.VK_G
                 || ControlsConfig.getKey(ControlsConfig.RIGHT) == KeyEvent.VK_G
                 || ControlsConfig.getKey(ControlsConfig.FIRE) == KeyEvent.VK_G;
-    }
-
-    /**
-     * Each destroyed enemy ship has a chance to drop a Cluster Grenade item.
-     *
-     * @param enemyShip
-     *            Destroyed enemy ship.
-     */
-    private void tryDropGrenade(final EnemyShip enemyShip) {
-        if (this.grenadeDropsThisLevel < MAX_GRENADE_DROPS_PER_LEVEL
-                && Math.random() < GRENADE_DROP_CHANCE) {
-            this.grenadeDropsThisLevel++;
-            this.itemManager.spawnItem(new ClusterGrenadeItem(
-                    enemyShip.getPositionX(), enemyShip.getPositionY()));
-            this.logger.info("Grenade item dropped from enemy ship.");
-        }
-    }
-
-    /**
-     * On level 7, a destroyed enemy has a small chance to drop the Orbital
-     * Annihilator, at most once per level.
-     *
-     * @param enemyShip
-     *            Destroyed enemy ship.
-     */
-    private void tryDropAnnihilator(final EnemyShip enemyShip) {
-        if (!this.annihilatorDroppedThisLevel
-            && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
-            && Math.random() < ANNIHILATOR_DROP_CHANCE) {
-            this.itemManager.spawnItem(new AnnihilatorItem(
-                enemyShip.getPositionX(), enemyShip.getPositionY()));
-            this.annihilatorDroppedThisLevel = true;
-            this.logger.info("Orbital Annihilator dropped from enemy ship.");
-        }
-    }
-
-    /**
-     * The red bonus ship drops Hyperfire once per level, whatever destroyed
-     * it (bullet, grenade fragment, Orbital Annihilator beam or Chameleon
-     * Hull contact).
-     *
-     * @param bonusShip
-     *            Destroyed bonus ship.
-     */
-    private void tryDropHyperfire(final EnemyShip bonusShip) {
-        if (!this.hyperfireDroppedThisLevel
-                && bonusShip != null) {
-            this.itemManager.spawnItem(new Hyperfire(
-                    bonusShip.getPositionX(), bonusShip.getPositionY()));
-            this.hyperfireDroppedThisLevel = true;
-            this.logger.info("Hyperfire dropped from red UFO.");
-        }
     }
 
     /**
@@ -1776,8 +1652,8 @@ public class GameScreen extends Screen {
                                         + enemyShip.getWidth() / 2,
                                 enemyShip.getPositionY()
                                         + enemyShip.getHeight() / 2);
-                        tryDropGrenade(enemyShip);
-                        tryDropChameleonHull(enemyShip);
+                        this.itemDropper.onEnemyDestroyedByGrenade(enemyShip,
+                                this.playerStatus.isAlive());
                         used = true;
                         break;
                     }
@@ -1792,8 +1668,8 @@ public class GameScreen extends Screen {
                     this.particleSystem.spawnEnemyExplosion(
                             bonusShip.getPositionX() + bonusShip.getWidth() / 2,
                             bonusShip.getPositionY() + bonusShip.getHeight() / 2);
-                    tryDropChameleonHull(bonusShip);
-                    tryDropHyperfire(bonusShip);
+                    this.itemDropper.onBonusEnemyDestroyed(bonusShip,
+                            this.playerStatus.isAlive());
                     used = true;
                 }
             }

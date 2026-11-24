@@ -7,8 +7,6 @@ import entity.Ship;
 /** Collectible Chameleon Hull power-up. @author Brieuc Viougeat */
 public final class ChameleonHull extends Item {
 
-    public static final int REQUIRED_LEVEL = 1;
-    public static final double DROP_CHANCE = 0.03;
     public static final long DURATION = 5000;
     public static final long COLOR_INTERVAL_NANOS = 150000000L;
 
