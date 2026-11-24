@@ -8,6 +8,7 @@ import entity.PlayerStatus;
 import entity.Ship;
 import entity.ShipType;
 import entity.item.ShieldItem;
+import entity.item.ItemEffectContext;
 
 /**
  * Standalone checks for the part of R1 that says only a shield-capable ship
@@ -80,19 +81,19 @@ public final class ShipShieldRestrictionTest {
      */
     private static void checkShieldItemOnlyWorksOnAShieldCapableShip() {
         Ship tank = new Ship(100, 100, ShipType.TANK);
-        new ShieldItem(0, 0).applyEffect(tank);
+        new ShieldItem(0, 0).applyEffect(new ItemEffectContext(tank));
         check(tank.isShieldActive(),
-                "The Energy Shield item works on the Heavy Tank");
+            "The Energy Shield item works on the Heavy Tank");
 
         Ship standard = new Ship(100, 100, ShipType.STANDARD);
-        new ShieldItem(0, 0).applyEffect(standard);
+        new ShieldItem(0, 0).applyEffect(new ItemEffectContext(standard));
         check(!standard.isShieldActive(),
-                "The Energy Shield item does nothing on the Standard Ship");
+            "The Energy Shield item does nothing on the Standard Ship");
 
         Ship speedster = new Ship(100, 100, ShipType.SPEEDSTER);
-        new ShieldItem(0, 0).applyEffect(speedster);
+        new ShieldItem(0, 0).applyEffect(new ItemEffectContext(speedster));
         check(!speedster.isShieldActive(),
-                "The Energy Shield item does nothing on the Speedster");
+            "The Energy Shield item does nothing on the Speedster");
     }
 
     /**

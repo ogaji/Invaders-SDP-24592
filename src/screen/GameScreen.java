@@ -67,6 +67,9 @@ import entity.item.AnnihilatorItem;
 import hud.BuffHud;
 import entity.item.ClusterGrenadeItem;
 import entity.item.TwinCanon;
+import entity.item.ItemEffectContext;
+import item.BuffManager;
+import item.ItemApplier;
 
 /**
  * Implements the game screen, where the action happens.
@@ -132,6 +135,8 @@ public class GameScreen extends Screen {
     private Set<BossBullet> bossBullets;
 
     private ItemManager itemManager;
+    private BuffManager buffManager;
+    private ItemEffectContext itemEffectContext;
     private final Random itemDropRandom = new Random();
     private final Random obstacleRandom = new Random();
     /** Active hazards; a set permits future expansion beyond one obstacle. */
@@ -155,8 +160,6 @@ public class GameScreen extends Screen {
     private int shipsDestroyedAtStart;
     /** Whether the Twin Cannon item already appeared in this level. */
     private boolean twinCanonSpawned;
-    /** Twin Cannon item falling on screen, collected by shooting it. */
-    private TwinCanon twinCanonItem;
 
     /** Player ship type selected before the stage started. */
     private ShipType shipType;
@@ -472,7 +475,11 @@ public class GameScreen extends Screen {
         // over, so a plain setColour is wiped back to the default green.
         this.ship.setBaseColor(ShipCustomization.getColor());
         this.ship.setBaseColor(ShipCustomization.getColor());
-        this.itemManager = new ItemManager(this.height);
+        this.annihilator = new OrbitalAnnihilator();
+        this.buffManager = new BuffManager();
+        this.itemEffectContext = new ItemEffectContext(this.ship, this.annihilator);
+        this.itemManager = new ItemManager(this.height,
+            new ItemApplier(this.buffManager, this.itemEffectContext));
 
         this.shieldDroppedThisLevel = false;
         this.chameleonDroppedThisLevel = false;
@@ -485,7 +492,6 @@ public class GameScreen extends Screen {
         this.grenadeDropsThisLevel = 0;
         this.shipsDestroyedAtStart = this.shipsDestroyed;
         this.twinCanonSpawned = false;
-        this.twinCanonItem = null;
 
         this.bonusEnemyManager = new BonusEnemyManager();
         this.screenFinishedCooldown = Core.getCooldown(SCREEN_CHANGE_INTERVAL);
@@ -494,7 +500,6 @@ public class GameScreen extends Screen {
         this.fallingObstacleCooldown = Core.getVariableCooldown(
                 FALLING_OBSTACLE_INTERVAL, FALLING_OBSTACLE_VARIANCE);
         this.fallingObstacleCooldown.reset();
-        this.annihilator = new OrbitalAnnihilator();
 
         this.bossBullets = new HashSet<BossBullet>();
         this.bossManager = new BossManager();
@@ -650,8 +655,9 @@ public class GameScreen extends Screen {
     }
 
     private void updateItems() {
-        updateTwinCanonItem();
-        this.itemManager.update(this.ship);
+        trySpawnTwinCanonItem();
+        this.itemManager.update();
+        this.buffManager.update(this.itemEffectContext);
 
         if (!this.ship.isDestroyed()) {
             this.itemManager.checkCollisions(this.ship);
@@ -870,11 +876,6 @@ public class GameScreen extends Screen {
 
         this.itemManager.draw(this.drawManager);
 
-        if (this.twinCanonItem != null)
-            drawManager.drawEntity(this.twinCanonItem,
-                    this.twinCanonItem.getPositionX(),
-                    this.twinCanonItem.getPositionY());
-
         drawManager.drawFloatingScores(floatingScoreHud, this);
 
         // Interface.
@@ -891,8 +892,8 @@ public class GameScreen extends Screen {
         // Item HUD: grenades left, active buffs and their time left.
         drawManager.drawGrenadeCount(this, this.ship.getGrenadeCount());
         drawManager.drawBuffs(this, BuffHud.buildLines(
-                this.itemManager.getBuffManager().getActiveBuffsRemainingTime(),
-                System.currentTimeMillis()));
+            this.buffManager.getActiveBuffsRemainingTime(),
+            System.currentTimeMillis()));
 
         // The Orbital Annihilator is shown only once it has been caught.
         if (this.annihilator.isReady())
@@ -1078,17 +1079,6 @@ public class GameScreen extends Screen {
                     recyclable.add(bullet);
                 }
 
-                // Shooting the Twin Cannon item collects it.
-                if (this.twinCanonItem != null
-                        && !recyclable.contains(bullet)
-                        && checkCollision(bullet, this.twinCanonItem)) {
-                    this.itemManager.getBuffManager().addBuff(
-                            this.twinCanonItem, this.ship);
-                    this.twinCanonItem = null;
-                    recyclable.add(bullet);
-                    AudioManager.playSFX("audio/sfx/item_pickup.wav");
-                }
-
                 // A bullet that already hit a ship cannot also hit the boss.
                 Boss boss = getBossOnScreen();
                 if (boss != null && !boss.isDefeated()
@@ -1099,6 +1089,8 @@ public class GameScreen extends Screen {
                 }
             }
         }
+        recyclable.addAll(this.itemManager.checkBulletCollisions(
+            this.bullets, recyclable));
         this.bullets.removeAll(recyclable);
         BulletPool.recycle(recyclable);
 
@@ -1212,7 +1204,7 @@ public class GameScreen extends Screen {
         this.particleSystem.spawnPlayerExplosion(
                 this.ship.getPositionX() + this.ship.getWidth() / 2,
                 this.ship.getPositionY() + this.ship.getHeight() / 2);
-        this.itemManager.getBuffManager().resetAllBuffs(this.ship);
+        this.buffManager.resetAllBuffs(this.itemEffectContext);
         if (this.playerStatus.getLives() == 1 && !this.isLowHealthBGM) {
             AudioManager.playBGM("audio/bgm/music_game_urgent.wav");
             this.isLowHealthBGM = true;
@@ -1654,23 +1646,16 @@ public class GameScreen extends Screen {
     }
 
     /**
-     * Twin Cannon item: appears once in its level after enough kills, then
-     * falls and is lost if it leaves the screen.
+     * Twin Cannon item: appears once in its level after enough kills.
      */
-    private void updateTwinCanonItem() {
+    private void trySpawnTwinCanonItem() {
         if (!this.twinCanonSpawned && TwinCanon.isUnlocked(this.level)
-                && this.shipsDestroyed - this.shipsDestroyedAtStart
-                        >= TwinCanon.SPAWN_KILLS) {
+            && this.shipsDestroyed - this.shipsDestroyedAtStart
+            >= TwinCanon.SPAWN_KILLS) {
             this.twinCanonSpawned = true;
-            this.twinCanonItem = new TwinCanon(
-                    30 + (int) (Math.random() * (this.width - 60)),
-                    SEPARATION_LINE_HEIGHT);
-        }
-
-        if (this.twinCanonItem != null) {
-            this.twinCanonItem.update();
-            if (this.twinCanonItem.getPositionY() > this.height)
-                this.twinCanonItem = null;
+            this.itemManager.spawnItem(new TwinCanon(
+                30 + (int) (Math.random() * (this.width - 60)),
+                SEPARATION_LINE_HEIGHT));
         }
     }
 
@@ -1710,11 +1695,10 @@ public class GameScreen extends Screen {
      */
     private void tryDropAnnihilator(final EnemyShip enemyShip) {
         if (!this.annihilatorDroppedThisLevel
-                && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
-                && Math.random() < ANNIHILATOR_DROP_CHANCE) {
+            && this.level == OrbitalAnnihilator.REQUIRED_LEVEL
+            && Math.random() < ANNIHILATOR_DROP_CHANCE) {
             this.itemManager.spawnItem(new AnnihilatorItem(
-                    enemyShip.getPositionX(), enemyShip.getPositionY(),
-                    this.annihilator));
+                enemyShip.getPositionX(), enemyShip.getPositionY()));
             this.annihilatorDroppedThisLevel = true;
             this.logger.info("Orbital Annihilator dropped from enemy ship.");
         }

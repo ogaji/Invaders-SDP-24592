@@ -59,13 +59,13 @@ public final class ChameleonHull extends Item {
     }
 
     @Override
-    public void applyEffect(final Ship ship) {
-        ship.activateChameleonHull();
+    public void applyEffect(final ItemEffectContext context) {
+        context.getShip().activateChameleonHull();
     }
 
     @Override
-    public void removeEffect(final Ship ship) {
-        ship.deactivateChameleonHull();
+    public void removeEffect(final ItemEffectContext context) {
+        context.getShip().deactivateChameleonHull();
     }
 
     @Override

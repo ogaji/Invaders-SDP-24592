@@ -1,7 +1,7 @@
 package entity.item;
 
 import engine.DrawManager.SpriteType;
-import entity.Ship;
+import engine.DrawManager;
 
 /**
  * Cluster Grenade item.
@@ -48,22 +48,20 @@ public class ClusterGrenadeItem extends Item {
                 SpriteType.Explosion);
     }
 
-    /**
-     * Gives grenades to the player ship.
-     */
     @Override
-    public void applyEffect(final Ship ship) {
-        if (ship != null) {
-            ship.addGrenades(GRENADES_PER_PICKUP);
+    public void draw(final DrawManager drawManager) {
+        drawManager.drawGrenadeItem(this.positionX, this.positionY);
+    }
+
+    @Override
+    public void applyEffect(final ItemEffectContext context) {
+        if (context != null && context.getShip() != null) {
+            context.getShip().addGrenades(GRENADES_PER_PICKUP);
         }
     }
 
-    /**
-     * Nothing to remove: the item has no duration, grenades stay in the
-     * ship's stock until they are launched.
-     */
     @Override
-    public void removeEffect(final Ship ship) {
+    public void removeEffect(final ItemEffectContext context) {
         // Instant item, no effect to remove.
     }
 

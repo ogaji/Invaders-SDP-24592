@@ -1,69 +1,66 @@
 package item;
 
-import entity.Ship;
+import audio.AudioManager;
+import entity.item.Item;
+import entity.item.ItemEffectContext;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import audio.AudioManager;
-import entity.item.ChameleonHull;
-import entity.item.Item;
-import entity.item.ShieldItem;
 
 public class BuffManager {
 
-    private final Map<Item, Long> activeBuffs;
+    private static final class ActiveBuff {
+        private final Item item;
+        private long expirationTime;
+
+        private ActiveBuff(final Item item, final long expirationTime) {
+            this.item = item;
+            this.expirationTime = expirationTime;
+        }
+    }
+
+    private final Map<Class<? extends Item>, ActiveBuff> activeBuffs;
 
     public BuffManager() {
         this.activeBuffs = new HashMap<>();
     }
 
-    public void addBuff(final Item item, final Ship ship) {
-        // Refresh Chameleon without allowing the old timer to cancel it.
-        if (item instanceof ChameleonHull) {
-            Iterator<Item> previous = this.activeBuffs.keySet().iterator();
-
-            while (previous.hasNext()) {
-                if (previous.next() instanceof ChameleonHull) {
-                    previous.remove();
-                }
-            }
+    /** Starts or refreshes a timed effect. Instant items are ignored. */
+    public void activate(final Item item, final ItemEffectContext context) {
+        if (item == null || !item.isTimed()) {
+            return;
         }
 
-        item.applyEffect(ship);
-
-        if (item.getDuration() > 0) {
-            long expirationTime =
-                    System.currentTimeMillis() + item.getDuration();
-
-            this.activeBuffs.put(item, expirationTime);
+        Class<? extends Item> kind = item.getClass();
+        ActiveBuff existing = this.activeBuffs.get(kind);
+        if (existing != null
+            && item.getReapplyPolicy() == Item.ReapplyPolicy.IGNORE) {
+            return;
         }
+
+        item.applyEffect(context);
+        long expirationTime = System.currentTimeMillis() + item.getDuration();
+        this.activeBuffs.put(kind, new ActiveBuff(item, expirationTime));
     }
 
-    public void update(final Ship ship) {
+    public void update(final ItemEffectContext context) {
         long currentTime = System.currentTimeMillis();
-
-        Iterator<Map.Entry<Item, Long>> iterator =
-                this.activeBuffs.entrySet().iterator();
+        Iterator<ActiveBuff> iterator = this.activeBuffs.values().iterator();
 
         while (iterator.hasNext()) {
-            Map.Entry<Item, Long> entry = iterator.next();
-
-            if (currentTime >= entry.getValue()) {
-                if (entry.getKey() instanceof ShieldItem)
-                    AudioManager.playSFX("audio/sfx/status_shield_off.wav");
-                else
-                    AudioManager.playSFX("audio/sfx/item_buff_expire.wav");
-                entry.getKey().removeEffect(ship);
+            ActiveBuff buff = iterator.next();
+            if (currentTime >= buff.expirationTime) {
+                AudioManager.playSFX(buff.item.getExpirySoundPath());
+                buff.item.removeEffect(context);
                 iterator.remove();
             }
         }
     }
 
-    public void resetAllBuffs(final Ship ship) {
-        for (Item item : this.activeBuffs.keySet()) {
-            item.removeEffect(ship);
+    public void resetAllBuffs(final ItemEffectContext context) {
+        for (ActiveBuff buff : this.activeBuffs.values()) {
+            buff.item.removeEffect(context);
         }
-
         this.activeBuffs.clear();
     }
 
@@ -71,13 +68,12 @@ public class BuffManager {
         Map<String, Long> remainingTimes = new HashMap<>();
         long currentTime = System.currentTimeMillis();
 
-        for (Map.Entry<Item, Long> entry : this.activeBuffs.entrySet()) {
+        for (ActiveBuff buff : this.activeBuffs.values()) {
             long remaining = Math.max(
-                    0,
-                    (entry.getValue() - currentTime) / 1000
+                0,
+                (buff.expirationTime - currentTime) / 1000
             );
-
-            remainingTimes.put(entry.getKey().getName(), remaining);
+            remainingTimes.put(buff.item.getName(), remaining);
         }
 
         return remainingTimes;
