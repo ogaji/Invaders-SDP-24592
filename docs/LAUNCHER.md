@@ -13,7 +13,7 @@ Download and extract `space-invaders-VERSION.zip`. It includes a playable game e
 | Linux | Run `sh launch.sh` |
 | Any supported platform | `java -jar space-invaders-launcher.jar` |
 
-Java 17 or newer is required. If macOS blocks a downloaded command script, use `sh launch.sh` from Terminal. These are portable Java distributions, not signed native installers or bundled Java runtimes.
+Java 17 or newer is required. Run the Java command from the extracted folder. The scripts switch to that folder before launching, which also avoids Java 17's Windows command-line limitation for some non-ASCII absolute paths. Relative `--data-dir` paths supplied to a script are resolved from the extracted folder. If macOS blocks a downloaded command script, use `sh launch.sh` from Terminal. These are portable Java distributions, not signed native installers or bundled Java runtimes.
 
 You can instead download only `space-invaders-launcher.jar`; on its first online run it installs the latest game from GitHub Releases. With no release and no bundled/cached game, it shows an error instead of launching an incomplete installation. The default repository is `ogaji/Invaders-SDP-24592`.
 

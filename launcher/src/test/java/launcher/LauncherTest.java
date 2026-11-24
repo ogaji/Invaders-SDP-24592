@@ -91,8 +91,8 @@ class LauncherTest {
         assertEquals("saved-score\n", Files.readString(saves.resolve("scores")));
         Process game = GameRunner.start(updated, installation.directory);
         assertTrue(game.waitFor(15, TimeUnit.SECONDS));
-        assertEquals(0, game.exitValue());
-        assertEquals(saves.toAbsolutePath().toString(), Files.readString(saves.resolve("child-process.txt")));
+        assertEquals(0, game.exitValue(), Files.readString(installation.directory.resolve("game.log")));
+        assertTrue(Files.isSameFile(saves, Path.of(Files.readString(saves.resolve("child-process.txt")))));
     }
 
     @Test void checksumFailureKeepsThePlayableVersionAndCleansTemporaryFiles() throws Exception {
@@ -249,8 +249,9 @@ class LauncherTest {
         Path data = temporary.resolve("standalone-data");
         String java = GameRunner.command(launcher, data).get(0);
         String hash = Installation.digest(launcher);
-        Process process = new ProcessBuilder(java, "-jar", launcher.toString(), "--offline", "--check-only",
-                "--data-dir", data.toString()).redirectErrorStream(true).redirectOutput(temporary.resolve("cli.log").toFile()).start();
+        Process process = new ProcessBuilder(java, "-jar", launcher.getFileName().toString(), "--offline", "--check-only",
+                "--data-dir", "../standalone-data").directory(distribution.toFile())
+                .redirectErrorStream(true).redirectOutput(temporary.resolve("cli.log").toFile()).start();
         assertTrue(process.waitFor(20, TimeUnit.SECONDS));
         assertEquals(0, process.exitValue(), Files.readString(temporary.resolve("cli.log")));
         assertEquals(hash, Installation.digest(launcher));

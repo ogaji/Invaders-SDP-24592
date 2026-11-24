@@ -3,7 +3,6 @@ package launcher;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -22,8 +21,11 @@ final class GameRunner {
     static List<String> command(Path jar, Path saves) {
         boolean windows = System.getProperty("os.name").toLowerCase(Locale.ROOT).startsWith("windows");
         Path java = Path.of(System.getProperty("java.home"), "bin", windows ? "java.exe" : "java");
-        List<String> command = new ArrayList<>(List.of(java.toString(), "-Dfile.encoding=UTF-8",
-                "-Dinvaders.storageDir=" + saves.toAbsolutePath(), "-jar", jar.toAbsolutePath().toString()));
-        return List.copyOf(command);
+        // Windows Java 17 can lose characters outside the active code page in command-line
+        // arguments. The working directory is passed through the Unicode process API;
+        // paths within this installation can therefore stay relative and ASCII here.
+        Path relativeJar = saves.toAbsolutePath().normalize().relativize(jar.toAbsolutePath().normalize());
+        return List.of(java.toString(), "-Dfile.encoding=UTF-8", "-Dinvaders.storageDir=.",
+                "-jar", relativeJar.toString());
     }
 }
