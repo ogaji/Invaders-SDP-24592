@@ -48,7 +48,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v6
         with:
@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: .\gradlew.bat --no-daemon --console=plain clean check
-      - name: Check (Linux)
+      - name: Check (Linux/macOS)
         if: runner.os != 'Windows'
         run: sh ./gradlew --no-daemon --console=plain clean check
 
@@ -81,19 +81,20 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v6
       - name: Build ZIP after checks
-        id: zip
         shell: bash
         env:
           RELEASE_VERSION: ${{ needs.validate.outputs.version }}
         run: |
           set -euo pipefail
           sh ./gradlew --no-daemon --console=plain distZip "-PreleaseVersion=$RELEASE_VERSION"
-          echo "archive=build/distributions/space-invaders-${RELEASE_VERSION}.zip" >> "$GITHUB_OUTPUT"
+          mkdir -p build/release
+          cp "build/distributions/space-invaders-${RELEASE_VERSION}.zip" build/release/
+          cp launcher/build/libs/space-invaders-launcher.jar build/release/
       - name: Keep release archive
         uses: actions/upload-artifact@v7
         with:
           name: release-zip
-          path: ${{ steps.zip.outputs.archive }}
+          path: build/release/*
           if-no-files-found: error
           retention-days: 7
 
@@ -118,11 +119,14 @@ jobs:
         run: |
           set -euo pipefail
           archive="release/space-invaders-${RELEASE_VERSION}.zip"
+          launcher="release/space-invaders-launcher.jar"
           test -s "$archive"
+          test -s "$launcher"
           (cd release && sha256sum "space-invaders-${RELEASE_VERSION}.zip" > "space-invaders-${RELEASE_VERSION}.zip.sha256")
+          (cd release && sha256sum space-invaders-launcher.jar > space-invaders-launcher.jar.sha256)
           release_flags=()
           if [[ "$RELEASE_TAG" == *-rc* ]]; then
             release_flags+=(--prerelease)
           fi
-          gh release create "$RELEASE_TAG" "$archive" "$archive.sha256" \
+          gh release create "$RELEASE_TAG" "$archive" "$archive.sha256" "$launcher" "$launcher.sha256" \
             --verify-tag --generate-notes --title "$RELEASE_TAG" "${release_flags[@]}"

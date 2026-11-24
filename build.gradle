@@ -28,13 +28,13 @@ spotless {
     lineEndings = 'UNIX'
     // Basic whitespace cleanup; convert leading tabs to four spaces, keeping import order.
     java {
-        target 'src/**/*.java', 'test/**/*.java'
+        target 'src/**/*.java', 'test/**/*.java', 'launcher/src/**/*.java'
         leadingTabsToSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
     }
     format 'buildFiles', {
-        target '*.gradle', 'gradle.properties', '.editorconfig', '.gitattributes', '.run/*.run.xml'
+        target '*.gradle', 'launcher/*.gradle', 'gradle.properties', '.editorconfig', '.gitattributes', '.run/*.run.xml'
         trimTrailingWhitespace()
         endWithNewline()
     }
@@ -230,11 +230,26 @@ tasks.named('jacocoTestReport') {
 
 tasks.named('check') {
     dependsOn tasks.named('jacocoTestReport')
+    dependsOn ':launcher:check'
 }
 
 tasks.named('jar', Jar) {
     manifest {
-        attributes 'Main-Class': application.mainClass.get()
+        attributes 'Main-Class': application.mainClass.get(), 'Implementation-Version': project.version
+    }
+}
+
+distributions {
+    main {
+        contents {
+            from(files(project(':launcher').layout.buildDirectory.file('libs/space-invaders-launcher.jar'))
+                    .builtBy(':launcher:jar'))
+            from('launcher/scripts') {
+                filePermissions { unix('rwxr-xr-x') }
+            }
+            from('launcher/README.txt')
+            from('README.md')
+        }
     }
 }
 

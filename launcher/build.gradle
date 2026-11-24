@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+}
+
+version = rootProject.version
+
+repositories { mavenCentral() }
+
+dependencies {
+    // Only Gson itself is needed at runtime; its annotations are compile-time metadata.
+    implementation('com.google.code.gson:gson:2.15.0') { transitive = false }
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+tasks.named('processResources') {
+    inputs.property('gameVersion', project.version.toString())
+    filesMatching('launcher.properties') {
+        expand(gameVersion: project.version.toString())
+    }
+}
+
+tasks.named('jar', Jar) {
+    archiveFileName = 'space-invaders-launcher.jar'
+    manifest {
+        attributes 'Main-Class': 'launcher.Launcher', 'Implementation-Version': project.version
+    }
+    // Keep the launcher runnable with java -jar, independently of the game's JAR.
+    from({ configurations.runtimeClasspath.collect { zipTree(it) } }) {
+        exclude 'module-info.class', 'META-INF/versions/**', 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('test', Test) {
+    dependsOn tasks.named('jar')
+    useJUnitPlatform()
+    systemProperty 'java.awt.headless', 'true'
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'launcher.test.jar', tasks.named('jar').get().archiveFile.get().asFile.absolutePath
+    systemProperty 'launcher.test.version', project.version.toString()
+    testLogging { events 'failed'; exceptionFormat = 'full' }
+}

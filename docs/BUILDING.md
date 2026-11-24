@@ -55,7 +55,7 @@ To run one suite, use `test --tests "engine.FileManagerTest"` for JUnit or `smok
 
 ## CI and local files
 
-[GitHub Actions](../.github/workflows/ci.yml) runs `clean check` with JDK 17 on Windows and Linux for pull requests and pushes to `main`. These two jobs verify the minimum supported Java version; JDK 21 and 25 are checked separately when changing JDK support or build tooling. Available test and coverage reports are kept as workflow artifacts for seven days, including on failed builds. After both checks pass on `main`, a separate job packages and uploads one versioned distribution ZIP.
+[GitHub Actions](../.github/workflows/ci.yml) runs `clean check` with JDK 17 on Windows, Linux, and macOS for pull requests and pushes to `main`. These jobs verify the minimum supported Java version, including the independent launcher; JDK 21 and 25 are checked separately when changing JDK support or build tooling. Available test and coverage reports are kept as workflow artifacts for seven days, including on failed builds. After all checks pass on `main`, a separate job packages and uploads one versioned distribution ZIP.
 
 `clean` removes generated files under `build/`. Gradle `run` keeps local scores and player assets in the repository root; records and achievements use the existing `.space-invaders/` directory under the user's home. Build output, local saves, and personal IDE settings are excluded from Git.
 
@@ -63,6 +63,8 @@ To run one suite, use `test --tests "engine.FileManagerTest"` for JUnit or `smok
 
 For the latest `main` build, open the successful **Java 17 Gradle build** run on the repository's **Actions** page and download the `main-<commit SHA>` artifact. It contains `space-invaders-main-<short SHA>.zip` and is available for seven days. Pull request runs do not upload a game ZIP. Tagged builds are available on the repository's **Releases** page.
 
-Extract the game ZIP and run `bin/space-invaders` on Linux or macOS, or `bin\space-invaders.bat` on Windows. Java 17 or later must be installed. Check that the game starts, plays a level with sound, and keeps records and purchases after a restart when validating a release.
+Extract the game ZIP and run `Launch.bat` on Windows, `Launch.command` on macOS, or `sh launch.sh` on Linux/macOS. Java 17 or later must be installed. The launcher checks GitHub Releases and updates the game JAR before you press **Play**. `java -jar space-invaders-launcher.jar` also works on all three platforms. The existing `bin/space-invaders` scripts run the bundled game directly without updating.
+
+Build the ZIP with `distZip -PreleaseVersion=0.2.0-rc1`. Build just the independent executable launcher JAR with `:launcher:jar`, and run its update/install regression tests with `:launcher:test`. Launcher tests are also part of root `check`. Its JUnit report is `launcher/build/reports/tests/test/index.html`. See [Launcher](LAUNCHER.md) for options, data directories, and the update contract.
 
 See [Releasing the game](RELEASING.md) for version tags, release archives, and checksums.
