@@ -32,6 +32,25 @@ jobs:
       - name: Check (Linux/macOS)
         if: runner.os != 'Windows'
         run: sh ./gradlew --no-daemon --console=plain clean check
+      - name: Verify packaged launcher (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          .\gradlew.bat --no-daemon --console=plain distZip "-PreleaseVersion=0.0.0-ci"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Expand-Archive -LiteralPath build/distributions/space-invaders-0.0.0-ci.zip -DestinationPath build/package-smoke
+          & ./build/package-smoke/space-invaders-0.0.0-ci/Launch.bat --offline --check-only --data-dir "$PWD/build/package data"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify packaged launcher (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sh ./gradlew --no-daemon --console=plain distZip "-PreleaseVersion=0.0.0-ci"
+          unzip -q build/distributions/space-invaders-0.0.0-ci.zip -d build/package-smoke
+          script=launch.sh
+          if [[ "$RUNNER_OS" == "macOS" ]]; then script=Launch.command; fi
+          sh "build/package-smoke/space-invaders-0.0.0-ci/$script" --offline --check-only --data-dir "$PWD/build/package data"
       - name: Upload test and coverage reports
         if: always()
         uses: actions/upload-artifact@v7
