@@ -52,24 +52,13 @@ public final class ItemDropper {
         this.random = random;
     }
 
-    public void onEnemyDestroyedByBullet(final EnemyShip enemy,
+    public void onEnemyDestroyed(final EnemyShip enemy,
             final boolean playerAlive, final ShipType shipType,
             final boolean formationEmpty) {
         tryDropChameleonHull(enemy, playerAlive);
         tryDropAnnihilator(enemy);
         tryDropGrenade(enemy);
         tryDropShield(enemy, shipType, formationEmpty);
-    }
-
-    public void onEnemyDestroyedByGrenade(final EnemyShip enemy,
-            final boolean playerAlive) {
-        tryDropGrenade(enemy);
-        tryDropChameleonHull(enemy, playerAlive);
-    }
-
-    public void onEnemyDestroyedByBeamOrContact(final EnemyShip enemy,
-            final boolean playerAlive) {
-        tryDropChameleonHull(enemy, playerAlive);
     }
 
     public void onBonusEnemyDestroyed(final EnemyShip bonusShip,
