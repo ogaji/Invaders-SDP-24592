@@ -13,11 +13,6 @@ import engine.DrawManager.SpriteType;
  */
 public class TwinCanon extends Item {
 
-    /** First level in which the Twin Cannon is available. */
-    public static final int SPAWN_LEVEL = 3;
-    /** Number of enemies destroyed in the level before the item appears. */
-    public static final int SPAWN_KILLS = 10;
-
     /** Duration of the buff, in milliseconds. */
     private static final long DURATION = 15000;
     /** Width of the item (same size as the ship). */
@@ -36,18 +31,6 @@ public class TwinCanon extends Item {
     public TwinCanon(final int positionX, final int positionY) {
         // TODO: replace by a dedicated item sprite when one exists.
         super(positionX, positionY, WIDTH, HEIGHT, SpriteType.Ship);
-    }
-
-    /**
-     * Checks if the Twin Cannon is available in the given level.
-     * It is unlocked from SPAWN_LEVEL and stays available in later levels.
-     *
-     * @param level
-     *            Current level number.
-     * @return True if the Twin Cannon is available in this level.
-     */
-    public static boolean isUnlocked(final int level) {
-        return level >= SPAWN_LEVEL;
     }
 
     @Override
