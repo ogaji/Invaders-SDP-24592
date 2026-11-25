@@ -1000,22 +1000,10 @@ public class GameScreen extends Screen {
                     if (!enemyShip.isDestroyed()
                             && checkCollision(bullet, enemyShip)) {
                         recyclable.add(bullet);
-                        if (!this.enemyShipFormation.hit(enemyShip))
-                            break;
-
-                        AudioManager.playSFX("audio/sfx/enemy_explosion.wav");
-                        this.score += enemyShip.getPointValue();
-                        floatingScoreHud.show(enemyShip);
-                        this.shipsDestroyed++;
-                        recordEnemyDefeat(enemyShip);
-                        this.particleSystem.spawnEnemyExplosion(
-                                enemyShip.getPositionX()
-                                        + enemyShip.getWidth() / 2,
-                                enemyShip.getPositionY()
-                                        + enemyShip.getHeight() / 2);
-                        this.itemDropper.onEnemyDestroyedByBullet(enemyShip,
-                                this.playerStatus.isAlive(), this.shipType,
-                                this.enemyShipFormation.isEmpty());
+                        if (this.enemyShipFormation.hit(enemyShip)) {
+                            AudioManager.playSFX("audio/sfx/enemy_explosion.wav");
+                            handleEnemyDefeat(enemyShip);
+                        }
                         break;
                     }
                 }
@@ -1023,15 +1011,7 @@ public class GameScreen extends Screen {
                 EnemyShip bonusShip = this.bonusEnemyManager.getShip();
                 if (!recyclable.contains(bullet) && this.bonusEnemyManager.isActive()
                         && checkCollision(bullet, bonusShip)) {
-                    recordEnemyDefeat(bonusShip);
-                    floatingScoreHud.show(bonusShip);
-                    this.score += this.bonusEnemyManager.destroy();
-                    this.shipsDestroyed++;
-                    this.particleSystem.spawnEnemyExplosion(
-                            bonusShip.getPositionX() + bonusShip.getWidth() / 2,
-                            bonusShip.getPositionY() + bonusShip.getHeight() / 2);
-                    this.itemDropper.onBonusEnemyDestroyed(bonusShip,
-                            this.playerStatus.isAlive());
+                    handleBonusEnemyDefeat(bonusShip);
                     recyclable.add(bullet);
                 }
 
@@ -1062,6 +1042,36 @@ public class GameScreen extends Screen {
     }
 
     /**
+     * Handles an enemy already destroyed by the formation. Collision paths play
+     * the sound so attacks that hit several enemies can play it once per pass.
+     */
+    private void handleEnemyDefeat(final EnemyShip enemy) {
+        this.score += enemy.getPointValue();
+        this.floatingScoreHud.show(enemy);
+        this.shipsDestroyed++;
+        recordEnemyDefeat(enemy);
+        spawnEnemyExplosion(enemy);
+        this.itemDropper.onEnemyDestroyed(enemy, this.playerStatus.isAlive(),
+                this.shipType, this.enemyShipFormation.isEmpty());
+    }
+
+    private void handleBonusEnemyDefeat(final EnemyShip bonusShip) {
+        recordEnemyDefeat(bonusShip);
+        this.floatingScoreHud.show(bonusShip);
+        this.score += this.bonusEnemyManager.destroy();
+        this.shipsDestroyed++;
+        spawnEnemyExplosion(bonusShip);
+        this.itemDropper.onBonusEnemyDestroyed(bonusShip,
+                this.playerStatus.isAlive());
+    }
+
+    private void spawnEnemyExplosion(final EnemyShip enemy) {
+        this.particleSystem.spawnEnemyExplosion(
+                enemy.getPositionX() + enemy.getWidth() / 2,
+                enemy.getPositionY() + enemy.getHeight() / 2);
+    }
+
+    /**
      * Applies the Orbital Annihilator beam: destroys every enemy in the
      * corridor and neutralizes enemy projectiles inside it.
      */
@@ -1070,15 +1080,9 @@ public class GameScreen extends Screen {
         for (EnemyShip enemyShip : this.enemyShipFormation) {
             if (!enemyShip.isDestroyed()
                     && OrbitalAnnihilator.hits(this.ship, enemyShip)) {
-                this.score += enemyShip.getPointValue();
-                floatingScoreHud.show(enemyShip);
-                this.shipsDestroyed++;
-                recordEnemyDefeat(enemyShip);
-
                 this.enemyShipFormation.destroy(enemyShip);
+                handleEnemyDefeat(enemyShip);
                 enemyDestroyed = true;
-                this.itemDropper.onEnemyDestroyedByBeamOrContact(enemyShip,
-                        this.playerStatus.isAlive());
             }
         }
 
@@ -1089,12 +1093,7 @@ public class GameScreen extends Screen {
         EnemyShip bonusShip = this.bonusEnemyManager.getShip();
         if (this.bonusEnemyManager.isActive()
                 && OrbitalAnnihilator.hits(this.ship, bonusShip)) {
-            recordEnemyDefeat(bonusShip);
-            floatingScoreHud.show(bonusShip);
-            this.score += this.bonusEnemyManager.destroy();
-            this.shipsDestroyed++;
-            this.itemDropper.onBonusEnemyDestroyed(bonusShip,
-                    this.playerStatus.isAlive());
+            handleBonusEnemyDefeat(bonusShip);
         }
 
         Set<Bullet> neutralized = new HashSet<Bullet>();
@@ -1560,15 +1559,9 @@ public class GameScreen extends Screen {
         boolean enemyDestroyed = false;
         for (EnemyShip enemy : this.enemyShipFormation) {
             if (!enemy.isDestroyed() && checkCollision(this.ship, enemy)) {
-                this.score += enemy.getPointValue();
-                floatingScoreHud.show(enemy);
-                this.shipsDestroyed++;
-                recordEnemyDefeat(enemy);
-
                 this.enemyShipFormation.destroy(enemy);
+                handleEnemyDefeat(enemy);
                 enemyDestroyed = true;
-                this.itemDropper.onEnemyDestroyedByBeamOrContact(enemy,
-                        this.playerStatus.isAlive());
             }
         }
         if (enemyDestroyed) {
@@ -1578,12 +1571,7 @@ public class GameScreen extends Screen {
         EnemyShip bonusShip = this.bonusEnemyManager.getShip();
         if (this.bonusEnemyManager.isActive()
                 && checkCollision(this.ship, bonusShip)) {
-            recordEnemyDefeat(bonusShip);
-            floatingScoreHud.show(bonusShip);
-            this.score += this.bonusEnemyManager.destroy();
-            this.shipsDestroyed++;
-            this.itemDropper.onBonusEnemyDestroyed(bonusShip,
-                    this.playerStatus.isAlive());
+            handleBonusEnemyDefeat(bonusShip);
         }
     }
 
@@ -1641,19 +1629,9 @@ public class GameScreen extends Screen {
                 for (EnemyShip enemyShip : this.enemyShipFormation)
                     if (!enemyShip.isDestroyed()
                             && checkCollision(fragment, enemyShip)) {
-                        this.score += enemyShip.getPointValue();
-                        floatingScoreHud.show(enemyShip);
-                        this.shipsDestroyed++;
-                        recordEnemyDefeat(enemyShip);
                         this.enemyShipFormation.destroy(enemyShip);
+                        handleEnemyDefeat(enemyShip);
                         enemyDestroyed = true;
-                        this.particleSystem.spawnEnemyExplosion(
-                                enemyShip.getPositionX()
-                                        + enemyShip.getWidth() / 2,
-                                enemyShip.getPositionY()
-                                        + enemyShip.getHeight() / 2);
-                        this.itemDropper.onEnemyDestroyedByGrenade(enemyShip,
-                                this.playerStatus.isAlive());
                         used = true;
                         break;
                     }
@@ -1661,15 +1639,7 @@ public class GameScreen extends Screen {
                 EnemyShip bonusShip = this.bonusEnemyManager.getShip();
                 if (!used && this.bonusEnemyManager.isActive()
                         && checkCollision(fragment, bonusShip)) {
-                    recordEnemyDefeat(bonusShip);
-                    floatingScoreHud.show(bonusShip);
-                    this.score += this.bonusEnemyManager.destroy();
-                    this.shipsDestroyed++;
-                    this.particleSystem.spawnEnemyExplosion(
-                            bonusShip.getPositionX() + bonusShip.getWidth() / 2,
-                            bonusShip.getPositionY() + bonusShip.getHeight() / 2);
-                    this.itemDropper.onBonusEnemyDestroyed(bonusShip,
-                            this.playerStatus.isAlive());
+                    handleBonusEnemyDefeat(bonusShip);
                     used = true;
                 }
             }
