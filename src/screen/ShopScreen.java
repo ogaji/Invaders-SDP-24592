@@ -2,14 +2,14 @@ package screen;
 
 import audio.AudioManager;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
-import currency.ShopCatalog.Category;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import shop.PurchaseResult;
 import shop.ShopController;
 import shop.ShopController.SaveStatus;
 import shop.ShopProduct;
+import shop.ShopProduct.Category;
 
 /** Displays products using the shared session controller. */
 public class ShopScreen extends Screen {
@@ -152,13 +152,7 @@ public class ShopScreen extends Screen {
     private void buySelectedProduct() {
         ShopProduct product = selectedSection == 0 ? upgrades.get(upgradeIndex) : unlocks.get(unlockIndex);
         lastProductAvailableByDefault = product.isAvailableByDefault();
-        // Refresh before the ownership check in case another game-loop action changed assets.
-        assets = controller.snapshot();
-        if (assets.getUnlockedContentIds().contains(product.getId())) {
-            lastResult = PurchaseResult.ALREADY_UNLOCKED;
-        } else {
-            lastResult = controller.purchase(product.getId());
-        }
+        lastResult = controller.purchase(product.getId());
         assets = controller.snapshot();
         refreshProducts();
 
@@ -197,10 +191,11 @@ public class ShopScreen extends Screen {
         switch (result) {
         case SUCCESS: return "Purchase complete.";
         case INSUFFICIENT_FUNDS: return "Not enough credits.";
-        case ALREADY_UNLOCKED: return "Already owned. No credits spent.";
-        case INVALID_ITEM_ID: return "Invalid product. Nothing purchased.";
-        case CATEGORY_MISMATCH: return "Unknown product or wrong category.";
-        case ITEM_NOT_AVAILABLE: return "This product is unavailable.";
+        case ALREADY_AVAILABLE:
+        case UNLOCK_FAILED: return "Already owned. No credits spent.";
+        case INVALID_PRODUCT_ID: return "Invalid product. Nothing purchased.";
+        case UNKNOWN_PRODUCT: return "Unknown product or wrong category.";
+        case PREREQUISITE_NOT_MET: return "This product is unavailable.";
         default: return "Purchase could not be completed.";
         }
     }

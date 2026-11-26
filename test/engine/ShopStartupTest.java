@@ -2,7 +2,7 @@ package engine;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
+import shop.PurchaseResult;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

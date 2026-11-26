@@ -1,4 +1,6 @@
-package currency;
+package shop;
+
+import currency.PlayerAssetsState;
 
 /** Tier IDs and provisional balance values for permanent Campaign upgrades. */
 public enum PermanentUpgrade {

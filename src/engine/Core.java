@@ -351,7 +351,7 @@ public final class Core {
         if (!assets.restore(savedAssets)) {
             throw new IOException("Loaded assets could not be restored.");
         }
-        return new ShopController(assets, files, ShopProducts.availableProducts());
+        return new ShopController(assets, ShopProducts.availableProducts(), files::savePlayerAssets);
     }
 
     private static boolean initializeShopWithRetry() {

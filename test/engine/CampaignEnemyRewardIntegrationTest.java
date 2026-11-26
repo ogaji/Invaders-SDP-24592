@@ -2,10 +2,10 @@ package engine;
 
 import audio.AudioManager;
 import boss.BossManager;
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
+import shop.PurchaseResult;
 import entity.Bullet;
 import entity.BulletPool;
 import entity.EnemyShip;

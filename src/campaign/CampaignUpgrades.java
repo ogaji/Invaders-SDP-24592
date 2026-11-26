@@ -1,6 +1,6 @@
 package campaign;
 
-import currency.PermanentUpgrade;
+import shop.PermanentUpgrade;
 import currency.PlayerAssetsState;
 import entity.Ship;
 import entity.ShipType;

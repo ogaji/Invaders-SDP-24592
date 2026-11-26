@@ -2,10 +2,7 @@ package engine;
 
 import currency.PlayerAssets;
 import currency.PlayerAssetsState;
-import currency.PurchaseResult;
-import currency.PurchaseSystem;
 import currency.RewardSystem;
-import currency.ShopCatalog;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -14,6 +11,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
+import shop.PurchaseResult;
+import shop.ShopController;
+import shop.ShopProduct;
+import shop.ShopProduct.Category;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -133,12 +135,11 @@ class RewardSettlementCoordinatorTest {
         assertTrue(rewards.rewardEnemy("TANK"));
         assertEquals(SettlementResult.SAVE_FAILED, coordinator.processSettlement());
 
-        ShopCatalog catalog = new ShopCatalog();
-        assertTrue(catalog.registerUpgrade("test-upgrade", 10));
-        assertTrue(catalog.registerUnlockable("test-unlock", 10));
-        PurchaseSystem purchases = new PurchaseSystem(assets, catalog);
-        assertEquals(PurchaseResult.SUCCESS, purchases.purchaseUnlockable("test-upgrade"));
-        assertEquals(PurchaseResult.SUCCESS, purchases.purchaseUnlockable("test-unlock"));
+        ShopController shop = new ShopController(assets, List.of(
+                new ShopProduct("test-upgrade", "Upgrade", Category.UPGRADE, 10),
+                new ShopProduct("test-unlock", "Unlock", Category.UNLOCKABLE, 10)), state -> { });
+        assertEquals(PurchaseResult.SUCCESS, shop.purchase("test-upgrade"));
+        assertEquals(PurchaseResult.SUCCESS, shop.purchase("test-unlock"));
         assertEquals(30, assets.getBalance());
         assertTrue(assets.isUnlocked("test-upgrade"));
         assertTrue(assets.isUnlocked("test-unlock"));

@@ -23,7 +23,7 @@ class CoreShopControllerAccessTest {
             assertThrows(IllegalStateException.class, Core::getAssetHudSnapshot);
             assertNull(field.get(null));
             ShopController configured = new ShopController(ShopTestFixtures.fundedAssets(),
-                    Core.getFileManager(), ShopTestFixtures.products());
+                    ShopTestFixtures.products(), Core.getFileManager()::savePlayerAssets);
             field.set(null, configured);
             assertThrows(IllegalStateException.class, Core::getAssetHudSnapshot);
             assertNull(rewardsField.get(null));
@@ -37,7 +37,7 @@ class CoreShopControllerAccessTest {
     @Test
     void accessReturnsExistingSessionAndSupportsPublicProductConfiguration() throws Exception {
         ShopController configured = new ShopController(ShopTestFixtures.fundedAssets(),
-                Core.getFileManager(), ShopTestFixtures.products());
+                ShopTestFixtures.products(), Core.getFileManager()::savePlayerAssets);
         Field field = Core.class.getDeclaredField("shopController");
         field.setAccessible(true);
         Object previous = field.get(null);
