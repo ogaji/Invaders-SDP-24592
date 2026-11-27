@@ -525,7 +525,7 @@ public final class FallingObstacleIntegrationTest {
         List<GameSettings> waves = new ArrayList<GameSettings>();
         waves.add(new GameSettings(5, 4, 60, 2000));
         waves.add(new GameSettings(5, 4, 60, 2000));
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 waves, false, 448, 520, 60, ShipType.STANDARD);
         game.initialize();
         obstacles(game).add(new FallingObstacle(20, 40));
@@ -546,7 +546,7 @@ public final class FallingObstacleIntegrationTest {
     }
 
     private static GameScreen newGame(final ShipType type) {
-        GameScreen game = new GameScreen(
+        GameScreen game = GameScreenFixtures.gameScreen(
                 new GameState(1, 0, type.getMaxLives(), 0, 0),
                 new GameSettings(5, 4, 60, 2000), false,
                 448, 520, 60, type);

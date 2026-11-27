@@ -5,6 +5,7 @@ import engine.GameState;
 import entity.PlayerStatus;
 import entity.ShipType;
 import screen.GameScreen;
+import screen.GameScreenFixtures;
 
 /** Standalone regression checks for B3 extra-life behavior. */
 public final class PlayerStatusExtraLifeTest {
@@ -27,7 +28,7 @@ public final class PlayerStatusExtraLifeTest {
 
     private static GameScreen createGameScreen(final GameState gameState,
             final boolean bonusLife, final ShipType shipType) {
-        return new GameScreen(gameState,
+        return GameScreenFixtures.gameScreen(gameState,
                 new GameSettings(5, 4, 60, 2000), bonusLife,
                 800, 600, 60, shipType);
     }

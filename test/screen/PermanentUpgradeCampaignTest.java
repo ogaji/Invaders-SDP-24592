@@ -42,7 +42,7 @@ class PermanentUpgradeCampaignTest {
 
     private GameScreen stage(ShipType type, CampaignUpgrades upgrades,
             int level, int lives, boolean bonusLife) {
-        GameScreen screen = new GameScreen(new GameState(level, 0, lives, 0, 0),
+        GameScreen screen = GameScreenFixtures.gameScreen(new GameState(level, 0, lives, 0, 0),
                 CampaignStageData.getStageSettings(level), bonusLife,
                 448, 520, 60, type, null, upgrades);
         screen.initialize();
@@ -79,7 +79,7 @@ class PermanentUpgradeCampaignTest {
     @ParameterizedTest
     @EnumSource(ShipType.class)
     void existingConstructorsKeepUnmodifiedStats(ShipType type) throws Exception {
-        GameScreen screen = new GameScreen(new GameState(1, 0, 20, 0, 0),
+        GameScreen screen = GameScreenFixtures.gameScreen(new GameState(1, 0, 20, 0, 0),
                 CampaignStageData.getStageSettings(1), false, 448, 520, 60, type, null);
         screen.initialize();
         assertEquals(type.getMaxLives(), screen.getPlayerStatus().getMaxLives());

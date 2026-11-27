@@ -16,8 +16,8 @@ public final class GameScreenWavesTest {
 
         List<GameSettings> input = new ArrayList<GameSettings>(
                 Arrays.asList(first, second));
-        new GameScreen(state, input, false, 448, 520, 60);
-        new GameScreen(state, first, false, 448, 520, 60);
+        GameScreenFixtures.gameScreen(state, input, false, 448, 520, 60);
+        GameScreenFixtures.gameScreen(state, first, false, 448, 520, 60);
 
         List<GameSettings> copy = GameScreen.copyWaves(input);
         input.clear();
@@ -26,25 +26,25 @@ public final class GameScreenWavesTest {
 
         expectInvalid(new Runnable() {
             public void run() {
-                new GameScreen(state, (List<GameSettings>) null, false,
+                GameScreenFixtures.gameScreen(state, (List<GameSettings>) null, false,
                         448, 520, 60);
             }
         });
         expectInvalid(new Runnable() {
             public void run() {
-                new GameScreen(state, new ArrayList<GameSettings>(), false,
+                GameScreenFixtures.gameScreen(state, new ArrayList<GameSettings>(), false,
                         448, 520, 60);
             }
         });
         expectInvalid(new Runnable() {
             public void run() {
-                new GameScreen(state, Arrays.asList(first, null), false,
+                GameScreenFixtures.gameScreen(state, Arrays.asList(first, null), false,
                         448, 520, 60);
             }
         });
         expectInvalid(new Runnable() {
             public void run() {
-                new GameScreen(state, (GameSettings) null, false,
+                GameScreenFixtures.gameScreen(state, (GameSettings) null, false,
                         448, 520, 60);
             }
         });

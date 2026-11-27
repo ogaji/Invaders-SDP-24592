@@ -152,7 +152,7 @@ public final class LevelCompletedEventTest {
     }
 
     private static void enemyDefeatPrecedesCompletion() throws Exception {
-        GameScreen screen = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen screen = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 new GameSettings(1, 1, 1000, 10000), false, 448, 520, 60,
                 new RunSession("order-check"));
         screen.initialize();
@@ -188,7 +188,7 @@ public final class LevelCompletedEventTest {
 
     private static GameScreen newScreen(final int level,
             final GameSettings... waves) {
-        GameScreen screen = new GameScreen(new GameState(level, 0, 3, 0, 0),
+        GameScreen screen = GameScreenFixtures.gameScreen(new GameState(level, 0, 3, 0, 0),
                 Arrays.asList(waves), false, 448, 520, 60);
         screen.initialize();
         return screen;

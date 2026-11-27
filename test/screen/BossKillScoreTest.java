@@ -46,7 +46,7 @@ public final class BossKillScoreTest {
 
     private static void checkDefeatGivesTheScoreOnce(final int level,
             final Boss.BossType expected) throws Exception {
-        GameScreen game = new GameScreen(new GameState(level, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(level, 0, 3, 0, 0),
                 new GameSettings(5, 4, 60, 2000), false, 448, 520, 60);
         game.initialize();
 

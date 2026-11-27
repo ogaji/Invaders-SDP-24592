@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import screen.GameScreen;
+import screen.GameScreenFixtures;
 import shop.ShopController;
 import shop.ShopTestFixtures;
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,7 +56,7 @@ class CoreAssetHudTest {
     }
 
     private void clearStage(int difficulty) {
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 new GameSettings(1, 1, 60, 2000), false, 448, 520, 60);
         Core.runCampaignStage(game, rewards, screen -> {
             long beforeClear = Core.getAssetHudSnapshot().getCredits();
@@ -79,7 +80,7 @@ class CoreAssetHudTest {
     void liveDefeatsRemainInTheTotalWhenABalanceLimitDelaysSettlement() throws Exception {
         assertTrue(assets.restore(new PlayerAssetsState(Integer.MAX_VALUE, null, null)));
         rewards.startRun("campaign");
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 new GameSettings(1, 1, 60, 2000), false, 448, 520, 60);
         Core.runCampaignStage(game, rewards, screen -> {
             screen.getGameplayEvents().publish(new EnemyDefeatedEvent("campaign", "one", DefeatedEnemyType.A));

@@ -12,6 +12,7 @@ import entity.PlayerStatus;
 import entity.Ship;
 import entity.ShipType;
 import screen.GameScreen;
+import screen.GameScreenFixtures;
 
 /** Small standalone regression checks for the B2 ship-stat changes. */
 public final class PlayerStatSourceTest {
@@ -130,7 +131,7 @@ public final class PlayerStatSourceTest {
                     && ship.getShootingInterval() == intervals[i],
                     "Selected type provides baseline firing interval");
 
-            GameScreen screen = new GameScreen(
+            GameScreen screen = GameScreenFixtures.gameScreen(
                     new GameState(1, 0, 3, 0, 0),
                     new GameSettings(5, 4, 60, 2000), false,
                     800, 600, 60, types[i]);

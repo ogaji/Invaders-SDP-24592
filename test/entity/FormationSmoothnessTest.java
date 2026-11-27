@@ -11,6 +11,7 @@ import java.util.logging.LogManager;
 import engine.GameSettings;
 import engine.GameState;
 import screen.GameScreen;
+import screen.GameScreenFixtures;
 
 /**
  * Standalone checks that every movement pattern moves in small, frequent
@@ -209,7 +210,7 @@ public final class FormationSmoothnessTest {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static EnemyShipFormation formation(final int baseSpeed,
             final String pattern) throws Exception {
-        GameScreen game = new GameScreen(new GameState(1, 0, 3, 0, 0),
+        GameScreen game = GameScreenFixtures.gameScreen(new GameState(1, 0, 3, 0, 0),
                 new GameSettings(5, 4, baseSpeed, 2000), false, SCREEN_WIDTH,
                 520, 60);
         game.initialize();

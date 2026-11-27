@@ -31,6 +31,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import records.RunSession;
 import screen.GameScreen;
+import screen.GameScreenFixtures;
 import shop.ShopController;
 import shop.ShopTestFixtures;
 import static org.junit.jupiter.api.Assertions.*;
@@ -75,7 +76,7 @@ class CampaignEnemyRewardIntegrationTest {
     private GameScreen stage(int level, int waves) {
         GameSettings[] settings = new GameSettings[waves];
         Arrays.fill(settings, new GameSettings(1, 1, 1, 100000));
-        return new GameScreen(new GameState(level, 0, 3, 0, 0), Arrays.asList(settings),
+        return GameScreenFixtures.gameScreen(new GameState(level, 0, 3, 0, 0), Arrays.asList(settings),
                 false, 448, 520, 60, run);
     }
 
